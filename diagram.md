@@ -15,536 +15,168 @@ This document provides three complete architecture views for Melodic Vault:
 
 ---
 
-## 2. Class Diagram (Detailed)
+## 2. Class Diagram (Core Features)
 
 ```mermaid
 classDiagram
 
-%% =========================
-%% Core Orchestration Layer
-%% =========================
 class VaultApplication {
-  +encryptFile(request: EncryptionRequest): EncryptionResponse
-  +decryptFile(request: DecryptionRequest): DecryptionResponse
-  +enrollUserProfile(request: EnrollmentRequest): EnrollmentResponse
-  +verifyAccess(request: AccessRequest): AccessDecision
-  +validateRequest(request: BaseRequest): ValidationResult
+  +encryptFile(file, userId)
+  +decryptFile(artifactId, userId)
+  +enrollProfile(userId)
 }
 
-class UseCaseCoordinator {
-  +handleEncryptionFlow(ctx: EncryptionContext): EncryptionResult
-  +handleDecryptionFlow(ctx: DecryptionContext): DecryptionResult
-  +handleEnrollmentFlow(ctx: EnrollmentContext): EnrollmentResult
-  +buildExecutionTrace(correlationId: String): ExecutionTrace
-}
-
-class SessionContext {
-  +sessionId: String
-  +userId: String
-  +deviceId: String
-  +correlationId: String
-  +startedAt: DateTime
-  +riskLevel: RiskLevel
-  +isTrustedDevice(): bool
-}
-
-%% =========================
-%% Input and Capture Layer
-%% =========================
 class PianoInputController {
-  +startCapture(mode: CaptureMode): CaptureSession
-  +stopCapture(sessionId: String): RawPerformance
-  +validateInputDevice(deviceId: String): DeviceValidationResult
-  +setInputSource(source: InputSource): void
-}
-
-class RawPerformance {
-  +performanceId: String
-  +capturedAt: DateTime
-  +source: InputSource
-  +events: List~NoteEvent~
-  +durationMs: int
-  +tempoEstimateBpm: float
-  +isComplete: bool
-}
-
-class NoteEvent {
-  +eventId: String
-  +note: String
-  +pitchClass: int
-  +octave: int
-  +velocity: int
-  +pressedAtMs: long
-  +releasedAtMs: long
-  +holdDurationMs: long
-}
-
-class InputSanitizer {
-  +sanitize(raw: RawPerformance): SanitizedPerformance
-  +removeNoise(events: List~NoteEvent~): List~NoteEvent~
-  +normalizeTimestamps(raw: RawPerformance): RawPerformance
-}
-
-class SanitizedPerformance {
-  +performanceId: String
-  +events: List~NoteEvent~
-  +interOnsetIntervals: List~int~
-  +holdDurations: List~int~
-  +validityScore: float
-}
-
-%% =========================
-%% Behavioral Biometrics
-%% =========================
-class RhythmFeatureExtractor {
-  +extract(perf: SanitizedPerformance): RhythmFeatureVector
-  +computeIOI(events: List~NoteEvent~): List~int~
-  +computeTempoInvariantRatios(ioi: List~int~): List~float~
-  +computeStabilityScore(features: RhythmFeatureVector): float
-}
-
-class RhythmFeatureVector {
-  +vectorId: String
-  +ioiRatios: List~float~
-  +holdRatios: List~float~
-  +timingVariance: float
-  +accentProfile: List~float~
-  +tempoBand: String
+  +startCapture(mode)
+  +stopCapture(sessionId)
 }
 
 class MelodyEncoder {
-  +encodeSequence(perf: SanitizedPerformance): MelodyToken
-  +canonicalizeNotes(notes: List~String~): String
-  +computeNGramFingerprint(encoded: String): String
+  +encode(performance)
 }
 
-class MelodyToken {
-  +tokenId: String
-  +canonicalSequence: String
-  +fingerprint: String
-  +noteCount: int
-  +rangeSemitones: int
-}
-
-class BiometricTemplateBuilder {
-  +buildTemplate(samples: List~RhythmFeatureVector~): BehavioralTemplate
-  +computeMeanVector(samples: List~RhythmFeatureVector~): List~float~
-  +computeCovariance(samples: List~RhythmFeatureVector~): Matrix
-}
-
-class BehavioralTemplate {
-  +templateId: String
-  +userId: String
-  +meanVector: List~float~
-  +covarianceRef: String
-  +acceptanceThreshold: float
-  +createdAt: DateTime
+class RhythmFeatureExtractor {
+  +extract(performance)
 }
 
 class MatcherEngine {
-  +compare(melody: MelodyToken, rhythm: RhythmFeatureVector, profile: AuthProfile): MatchResult
-  +melodyDistance(a: MelodyToken, b: MelodyToken): float
-  +rhythmDistance(a: RhythmFeatureVector, t: BehavioralTemplate): float
-  +combinedScore(melodyScore: float, rhythmScore: float): float
-}
-
-class MatchResult {
-  +melodyScore: float
-  +rhythmScore: float
-  +combinedScore: float
-  +accepted: bool
-  +failureReason: String
-}
-
-%% =========================
-%% Key Derivation and Crypto
-%% =========================
-class KeyMaterialComposer {
-  +compose(melody: MelodyToken, rhythm: RhythmFeatureVector, context: KeyContext): DerivedSeed
-  +canonicalSerialize(...): String
-  +bindContext(serialized: String, ctx: KeyContext): String
-}
-
-class KeyContext {
-  +fileId: String
-  +userId: String
-  +vaultVersion: String
-  +kdfSaltRef: String
-  +pepperId: String
-}
-
-class DerivedSeed {
-  +seedDigest: String
-  +entropyEstimate: float
-  +version: String
+  +compare(melody, rhythm, profile)
 }
 
 class KDFService {
-  +deriveKey(seed: DerivedSeed, params: KDFParameters): SymmetricKey
-  +verifyParameters(params: KDFParameters): bool
-}
-
-class KDFParameters {
-  +algorithm: String
-  +iterations: int
-  +memoryKiB: int
-  +parallelism: int
-  +salt: String
-  +outputLength: int
-}
-
-class SymmetricKey {
-  +keyId: String
-  +bytesRef: SecureHandle
-  +algorithm: String
-  +lengthBits: int
-  +destroy(): void
+  +deriveKey(seed, params)
 }
 
 class EncryptionService {
-  +encrypt(plain: BinaryBlob, key: SymmetricKey, aad: String): CipherPackage
-  +decrypt(pkg: CipherPackage, key: SymmetricKey, aad: String): BinaryBlob
-  +generateNonce(): String
-}
-
-class CipherPackage {
-  +ciphertext: BinaryBlob
-  +nonce: String
-  +authTag: String
-  +aadHash: String
-  +cryptoVersion: String
-}
-
-%% =========================
-%% Persistence and Metadata
-%% =========================
-class SecureStorageManager {
-  +storeEncryptedArtifact(record: EncryptedArtifactRecord): String
-  +fetchEncryptedArtifact(artifactId: String): EncryptedArtifactRecord
-  +deleteArtifact(artifactId: String): void
-}
-
-class EncryptedArtifactRecord {
-  +artifactId: String
-  +ownerUserId: String
-  +fileName: String
-  +mimeType: String
-  +cipherPackageRef: String
-  +metadataRef: String
-  +createdAt: DateTime
-}
-
-class MetadataRepository {
-  +saveMeta(meta: VaultMetadata): String
-  +getMeta(artifactId: String): VaultMetadata
-  +updateAccessState(state: AccessState): void
-}
-
-class VaultMetadata {
-  +artifactId: String
-  +melodyFingerprint: String
-  +templateRef: String
-  +kdfParamRef: String
-  +allowedDriftMs: int
-  +maxAttempts: int
-  +lockoutWindowSec: int
-  +version: String
+  +encrypt(bytes, key)
+  +decrypt(cipherPackage, key)
 }
 
 class ProfileRepository {
-  +saveAuthProfile(profile: AuthProfile): String
-  +loadAuthProfile(userId: String, artifactId: String): AuthProfile
-  +rotateProfile(profileId: String): void
+  +saveProfile(profile)
+  +loadProfile(userId, artifactId)
 }
 
-class AuthProfile {
-  +profileId: String
-  +userId: String
-  +melodyToken: MelodyToken
-  +behavioralTemplate: BehavioralTemplate
-  +policy: AuthPolicy
+class SecureStorageManager {
+  +storeEncryptedArtifact(cipherPackage)
+  +fetchEncryptedArtifact(artifactId)
 }
 
-class AuthPolicy {
-  +maxAttempts: int
-  +lockoutSeconds: int
-  +minConfidence: float
-  +deviceBindingRequired: bool
-}
-
-%% =========================
-%% Security and Governance
-%% =========================
-class AccessControlService {
-  +authorize(userId: String, artifactId: String): AuthorizationResult
-  +checkDeviceBinding(ctx: SessionContext): bool
-  +isWithinPolicy(state: AttemptState, policy: AuthPolicy): bool
+class MetadataRepository {
+  +saveMeta(meta)
+  +getMeta(artifactId)
 }
 
 class AttemptTracker {
-  +registerAttempt(userId: String, artifactId: String, success: bool): AttemptState
-  +isLockedOut(userId: String, artifactId: String): bool
-  +resetOnSuccess(userId: String, artifactId: String): void
-}
-
-class AttemptState {
-  +failedAttempts: int
-  +lockedUntil: DateTime
-  +lastAttemptAt: DateTime
-}
-
-class IntegrityService {
-  +verifyCipherPackage(pkg: CipherPackage): bool
-  +verifyMetadataSignature(meta: VaultMetadata): bool
-  +computeDigest(blob: BinaryBlob): String
+  +isLockedOut(userId, artifactId)
+  +registerAttempt(userId, artifactId, success)
 }
 
 class AuditLogger {
-  +logSecurityEvent(event: SecurityEvent): void
-  +logOperationalEvent(event: OperationalEvent): void
-  +queryByCorrelationId(id: String): List~AuditRecord~
+  +logSecurityEvent(event)
 }
 
-class SecurityEvent {
-  +eventType: String
-  +userId: String
-  +artifactId: String
-  +severity: String
-  +timestamp: DateTime
-  +details: Map
-}
-
-class NotificationService {
-  +notifyFailure(userId: String, reason: String): void
-  +notifyLockout(userId: String, until: DateTime): void
-  +notifySuccess(userId: String, artifactId: String): void
-}
-
-%% =========================
-%% DTOs
-%% =========================
-class EncryptionRequest
-class EncryptionResponse
-class DecryptionRequest
-class DecryptionResponse
-class EnrollmentRequest
-class EnrollmentResponse
-class AccessRequest
-class AccessDecision
-class EncryptionContext
-class DecryptionContext
-class EnrollmentContext
-class EncryptionResult
-class DecryptionResult
-class EnrollmentResult
-
-%% =========================
-%% Relationships
-%% =========================
-VaultApplication --> UseCaseCoordinator
-VaultApplication --> AccessControlService
+VaultApplication --> PianoInputController
+VaultApplication --> MelodyEncoder
+VaultApplication --> RhythmFeatureExtractor
+VaultApplication --> MatcherEngine
+VaultApplication --> KDFService
+VaultApplication --> EncryptionService
+VaultApplication --> ProfileRepository
+VaultApplication --> SecureStorageManager
+VaultApplication --> MetadataRepository
+VaultApplication --> AttemptTracker
 VaultApplication --> AuditLogger
-
-UseCaseCoordinator --> PianoInputController
-UseCaseCoordinator --> InputSanitizer
-UseCaseCoordinator --> MelodyEncoder
-UseCaseCoordinator --> RhythmFeatureExtractor
-UseCaseCoordinator --> MatcherEngine
-UseCaseCoordinator --> KeyMaterialComposer
-UseCaseCoordinator --> KDFService
-UseCaseCoordinator --> EncryptionService
-UseCaseCoordinator --> SecureStorageManager
-UseCaseCoordinator --> MetadataRepository
-UseCaseCoordinator --> ProfileRepository
-UseCaseCoordinator --> AttemptTracker
-UseCaseCoordinator --> IntegrityService
-UseCaseCoordinator --> NotificationService
-
-PianoInputController --> RawPerformance
-RawPerformance --> NoteEvent
-InputSanitizer --> SanitizedPerformance
-RhythmFeatureExtractor --> RhythmFeatureVector
-MelodyEncoder --> MelodyToken
-BiometricTemplateBuilder --> BehavioralTemplate
-MatcherEngine --> MatchResult
-
-KeyMaterialComposer --> DerivedSeed
-KeyMaterialComposer --> KeyContext
-KDFService --> KDFParameters
-KDFService --> SymmetricKey
-EncryptionService --> CipherPackage
-
-SecureStorageManager --> EncryptedArtifactRecord
-MetadataRepository --> VaultMetadata
-ProfileRepository --> AuthProfile
-AuthProfile --> MelodyToken
-AuthProfile --> BehavioralTemplate
-AuthProfile --> AuthPolicy
-
-AttemptTracker --> AttemptState
-AuditLogger --> SecurityEvent
-
-EncryptionRequest ..> EncryptionContext
-DecryptionRequest ..> DecryptionContext
-EnrollmentRequest ..> EnrollmentContext
 ```
 
 ---
 
-## 3. Sequence Diagram (Detailed End-to-End)
+## 3. Runtime Diagrams (Core Features)
+
+### 3.1 Activity Diagram (Core Features)
+
+```mermaid
+flowchart TD
+
+A[Start] --> B[Select operation]
+B --> C{Encrypt or Decrypt}
+
+C -->|Encrypt| E1[Select file]
+E1 --> E2[Capture melody and rhythm]
+E2 --> E3[Extract melody and rhythm features]
+E3 --> E4[Derive key using KDF]
+E4 --> E5[Encrypt file using AES]
+E5 --> E6[Store encrypted artifact and metadata]
+E6 --> Z[End]
+
+C -->|Decrypt| D1[Request artifact]
+D1 --> D2[Check lockout and policy]
+D2 --> D3[Capture melody and rhythm]
+D3 --> D4[Compare against stored profile]
+D4 --> D5{Match result}
+D5 -->|No| D6[Deny access and update attempts]
+D6 --> Z
+D5 -->|Yes| D7[Derive key using KDF]
+D7 --> D8[Fetch and decrypt artifact]
+D8 --> D9[Return plaintext and reset attempts]
+D9 --> Z
+```
+
+### 3.2 Sequence Diagram (Core Features)
 
 ```mermaid
 sequenceDiagram
 autonumber
 
 actor U as User
-participant UI as Client UI / Piano Interface
-participant API as VaultApplication API
-participant ACS as AccessControlService
-participant AT as AttemptTracker
-participant PIC as PianoInputController
-participant IS as InputSanitizer
-participant ME as MelodyEncoder
-participant RFE as RhythmFeatureExtractor
-participant PR as ProfileRepository
-participant MM as MatcherEngine
-participant KMC as KeyMaterialComposer
-participant KDF as KDFService
-participant ENC as EncryptionService
-participant SS as SecureStorageManager
-participant MR as MetadataRepository
-participant INT as IntegrityService
-participant AUD as AuditLogger
-participant NOTI as NotificationService
-
-rect rgb(235, 245, 255)
-Note over U,UI: ENROLLMENT / REGISTRATION (one-time per profile)
-U->>UI: Start Enrollment
-UI->>API: enrollUserProfile(userId, samples=3..N)
-API->>AUD: logOperationalEvent(ENROLLMENT_STARTED)
-loop Capture each sample
-  API->>PIC: startCapture(ENROLL)
-  U->>UI: Play melody sample
-  UI->>PIC: stream note events
-  API->>PIC: stopCapture(sessionId)
-  PIC-->>API: RawPerformance
-  API->>IS: sanitize(raw)
-  IS-->>API: SanitizedPerformance
-  API->>ME: encodeSequence(perf)
-  ME-->>API: MelodyToken
-  API->>RFE: extract(perf)
-  RFE-->>API: RhythmFeatureVector
-end
-API->>PR: saveAuthProfile(melody + behavioralTemplate + policy)
-PR-->>API: profileId
-API->>AUD: logSecurityEvent(ENROLLMENT_COMPLETED)
-API-->>UI: EnrollmentResponse(success, profileId)
-end
+participant API as VaultApplication
+participant IN as PianoInputController
+participant FE as Melody and Rhythm Processing
+participant AU as Matcher and AttemptTracker
+participant CR as KDF and EncryptionService
+participant ST as Profile and Storage Repos
 
 rect rgb(240, 255, 240)
-Note over U,UI: FILE ENCRYPTION FLOW (Lock)
-U->>UI: Select file + request encrypt
-UI->>API: encryptFile(file, userId, artifactMeta)
-API->>ACS: authorize(userId, encrypt)
-ACS-->>API: allow
-API->>PIC: startCapture(ENCRYPT)
-U->>UI: Play melody + rhythm
-UI->>PIC: stream events
-API->>PIC: stopCapture(sessionId)
-PIC-->>API: RawPerformance
-
-API->>IS: sanitize(raw)
-IS-->>API: SanitizedPerformance
-API->>ME: encodeSequence(perf)
-ME-->>API: MelodyToken
-API->>RFE: extract(perf)
-RFE-->>API: RhythmFeatureVector
-
-API->>KMC: compose(melody, rhythm, keyContext)
-KMC-->>API: DerivedSeed
-API->>KDF: deriveKey(seed, kdfParams)
-KDF-->>API: SymmetricKey
-
-API->>ENC: encrypt(fileBytes, key, aad)
-ENC-->>API: CipherPackage
-API->>INT: verifyCipherPackage(pkg)
-INT-->>API: valid
-
-API->>SS: storeEncryptedArtifact(cipherPackage)
-SS-->>API: artifactId
-API->>MR: saveMeta(artifactId, melodyFingerprint, policy, kdfRef)
-MR-->>API: metadataSaved
-API->>AUD: logSecurityEvent(ENCRYPT_SUCCESS)
-API->>NOTI: notifySuccess(userId, artifactId)
-API-->>UI: EncryptionResponse(success, artifactId)
+Note over U,ST: Encrypt Flow
+U->>API: encryptFile(file, userId)
+API->>IN: capturePerformance(ENCRYPT)
+IN-->>API: performance
+API->>FE: extractFeatures(performance)
+FE-->>API: melody and rhythm
+API->>CR: deriveKey(melody, rhythm)
+CR-->>API: key
+API->>CR: encrypt(file, key)
+CR-->>API: cipherPackage
+API->>ST: saveEncryptedArtifact(cipherPackage, metadata)
+ST-->>API: artifactId
+API-->>U: encryptionSuccess(artifactId)
 end
 
 rect rgb(255, 248, 240)
-Note over U,UI: FILE DECRYPTION FLOW (Unlock)
-U->>UI: Request file access (artifactId)
-UI->>API: decryptFile(artifactId, userId)
-
-API->>ACS: authorize(userId, artifactId)
-ACS-->>API: allow/deny
-alt Authorization denied
-  API->>AUD: logSecurityEvent(ACCESS_DENIED_POLICY)
-  API-->>UI: DecryptionResponse(denied)
-else Authorization allowed
-  API->>AT: isLockedOut(userId, artifactId)
-  AT-->>API: true/false
-  alt Locked out
-    API->>AUD: logSecurityEvent(LOCKOUT_ACTIVE)
-    API->>NOTI: notifyLockout(userId, lockedUntil)
-    API-->>UI: DecryptionResponse(locked)
-  else Not locked
-    API->>PR: loadAuthProfile(userId, artifactId)
-    PR-->>API: AuthProfile
-    API->>PIC: startCapture(DECRYPT)
-    U->>UI: Replay melody + rhythm
-    UI->>PIC: stream events
-    API->>PIC: stopCapture(sessionId)
-    PIC-->>API: RawPerformance
-
-    API->>IS: sanitize(raw)
-    IS-->>API: SanitizedPerformance
-    API->>ME: encodeSequence(perf)
-    ME-->>API: MelodyToken
-    API->>RFE: extract(perf)
-    RFE-->>API: RhythmFeatureVector
-
-    API->>MM: compare(melody, rhythm, profile)
-    MM-->>API: MatchResult
-
-    alt Match failed
-      API->>AT: registerAttempt(userId, artifactId, false)
-      AT-->>API: AttemptState
-      API->>AUD: logSecurityEvent(AUTH_MATCH_FAILED)
-      API->>NOTI: notifyFailure(userId, reason)
-      API-->>UI: DecryptionResponse(denied, remainingAttempts)
-    else Match passed
-      API->>KMC: compose(melody, rhythm, keyContext)
-      KMC-->>API: DerivedSeed
-      API->>KDF: deriveKey(seed, kdfParams)
-      KDF-->>API: SymmetricKey
-
-      API->>SS: fetchEncryptedArtifact(artifactId)
-      SS-->>API: EncryptedArtifactRecord
-      API->>INT: verifyCipherPackage(pkg)
-      INT-->>API: valid/invalid
-
-      alt Integrity invalid
-        API->>AUD: logSecurityEvent(INTEGRITY_FAILURE)
-        API-->>UI: DecryptionResponse(error_integrity)
-      else Integrity valid
-        API->>ENC: decrypt(cipherPackage, key, aad)
-        ENC-->>API: plaintext
-        API->>AT: registerAttempt(userId, artifactId, true)
-        API->>AT: resetOnSuccess(userId, artifactId)
-        API->>AUD: logSecurityEvent(DECRYPT_SUCCESS)
-        API-->>UI: DecryptionResponse(success, plaintext)
-      end
-    end
-  end
+Note over U,ST: Decrypt Flow
+U->>API: decryptFile(artifactId, userId)
+API->>AU: checkLockout(userId, artifactId)
+AU-->>API: allowed
+API->>IN: capturePerformance(DECRYPT)
+IN-->>API: performance
+API->>FE: extractFeatures(performance)
+FE-->>API: melody and rhythm
+API->>ST: loadProfile(userId, artifactId)
+ST-->>API: profile
+API->>AU: compare(melody, rhythm, profile)
+AU-->>API: match or reject
+alt reject
+  API->>AU: registerFailedAttempt()
+  API-->>U: accessDenied
+else match
+  API->>CR: deriveKey(melody, rhythm)
+  CR-->>API: key
+  API->>ST: fetchEncryptedArtifact(artifactId)
+  ST-->>API: cipherPackage
+  API->>CR: decrypt(cipherPackage, key)
+  CR-->>API: plaintext
+  API->>AU: resetAttempts()
+  API-->>U: decryptionSuccess(plaintext)
 end
 end
 ```
