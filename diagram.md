@@ -777,7 +777,7 @@ P63 -->|notification message| NS
 NS -->|delivery status| P63
 
 P51 -->|operation outcome| U
-P63 -->|user alert (optional)| U
+P63 -->|optional user alert| U
 ```
 
 ---
