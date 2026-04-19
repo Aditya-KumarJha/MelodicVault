@@ -28,7 +28,7 @@ class VaultApplication {
   +decryptFile(request: DecryptionRequest): DecryptionResponse
   +enrollUserProfile(request: EnrollmentRequest): EnrollmentResponse
   +verifyAccess(request: AccessRequest): AccessDecision
-  -validateRequest(request: BaseRequest): ValidationResult
+  +validateRequest(request: BaseRequest): ValidationResult
 }
 
 class UseCaseCoordinator {
@@ -562,9 +562,6 @@ P0 -->|Encrypted file, access status, alerts| U
 ADM[External Entity: Security Admin] -->|Policy configuration, audit queries| P0
 P0 -->|Audit reports, security events| ADM
 
-P0 -->|Encrypted artifacts, metadata, profile refs| DS[(Secure Storage Boundary)]
-DS -->|Encrypted artifact retrieval, profile metadata| P0
-
 P0 -->|Optional notifications| NS[External Service: Notification Channel]
 NS -->|Delivery status| P0
 ```
@@ -572,7 +569,7 @@ NS -->|Delivery status| P0
 ### Level 0 explanation
 - Entire platform modeled as one process: P0 Melodic Vault System.
 - User and Security Admin are external entities.
-- Secure storage boundary represents all persistent stores at context level.
+- Data stores are intentionally omitted at Level 0 context view (industry DFD convention).
 
 ---
 
@@ -688,7 +685,7 @@ P21 -->|melody token| P23
 P22 -->|rhythm vector| P23
 P23 -->|feature package + quality score| P24
 
-P24 -->|template/profile write (enroll path)| D3
+P24 -->|template profile write enroll path| D3
 P23 -->|capture quality events| D5
 P13 -->|device/session anomaly events| D5
 P24 -->|enrollment completion event| D5
@@ -764,7 +761,7 @@ P42 -->|symmetric key handle| P43
 P43 -->|cipher package or plaintext| P44
 
 P44 -->|valid package for persistence| P51
-P44 -->|metadata bindings (aad hash, version)| P52
+P44 -->|metadata bindings aad hash version| P52
 P51 -->|artifact write/read| D1
 P52 -->|metadata write/read| D2
 
