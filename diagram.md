@@ -212,20 +212,20 @@ NS -->|Delivery status| P0
 ## 5. DFD Level 1 (Major Process Decomposition)
 
 ```mermaid
-flowchart TB
+flowchart LR
 
 %% External Entities
 U[User]
 ADM[Security Admin]
 NS[Notification Service]
 
-%% Processes
-P1((1.0 Capture and Validate Input))
-P2((2.0 Build Features and Profile Data))
-P3((3.0 Authenticate Performance))
-P4((4.0 Derive Key and Encrypt/Decrypt))
-P5((5.0 Store/Retrieve Secure Artifacts))
-P6((6.0 Governance: Policy, Attempts, Audit))
+%% Processes (square, left-to-right)
+P1[1.0 Capture and Validate Input]
+P2[2.0 Build Features and Profile Data]
+P3[3.0 Authenticate Performance]
+P4[4.0 Derive Key and Encrypt/Decrypt]
+P5[5.0 Store/Retrieve Secure Artifacts]
+P6[6.0 Governance: Policy, Attempts, Audit]
 
 %% Data Stores
 D1[(D1 Encrypted Artifact Store)]
@@ -235,7 +235,7 @@ D4[(D4 Attempt State Store)]
 D5[(D5 Audit Log Store)]
 D6[(D6 KDF/Config Parameter Store)]
 
-%% User Flows
+%% User Flows (LR)
 U -->|File, melody performance, action| P1
 P1 -->|Sanitized events| P2
 P2 -->|Melody token + rhythm vector| P3
@@ -276,6 +276,10 @@ P5 -->|Operation outcome| U
 %% Auxiliary readbacks
 D2 -->|Melody fingerprint, policy refs| P3
 D2 -->|AAD/version refs| P4
+
+%% Styling: make process nodes squared (sharp corners)
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P1,P2,P3,P4,P5,P6 squared
 ```
 
 ### Level 1 explanation
@@ -295,18 +299,18 @@ Level 2 is shown in three detailed sub-diagrams covering the most critical Level
 ### 6.1 DFD Level 2 for Process 1.0 + 2.0 (Capture, Sanitize, Feature Build)
 
 ```mermaid
-flowchart TB
+flowchart LR
 
 U[User]
 
-P11((1.1 Initialize Capture Session))
-P12((1.2 Collect Note Events))
-P13((1.3 Validate Device and Session Integrity))
-P14((1.4 Sanitize and Normalize Event Stream))
-P21((2.1 Encode Canonical Melody Sequence))
-P22((2.2 Extract Rhythm and Timing Features))
-P23((2.3 Compute Quality and Confidence Metrics))
-P24((2.4 Build Enrollment Template - when required))
+P11[1.1 Initialize Capture Session]
+P12[1.2 Collect Note Events]
+P13[1.3 Validate Device and Session Integrity]
+P14[1.4 Sanitize and Normalize Event Stream]
+P21[2.1 Encode Canonical Melody Sequence]
+P22[2.2 Extract Rhythm and Timing Features]
+P23[2.3 Compute Quality and Confidence Metrics]
+P24[2.4 Build Enrollment Template - when required]
 
 D3[(D3 Auth Profile Store)]
 D5[(D5 Audit Log Store)]
@@ -325,20 +329,23 @@ P24 -->|template profile write enroll path| D3
 P23 -->|capture quality events| D5
 P13 -->|device/session anomaly events| D5
 P24 -->|enrollment completion event| D5
+
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P11,P12,P13,P14,P21,P22,P23,P24 squared
 ```
 
 ### 6.2 DFD Level 2 for Process 3.0 (Authentication and Decisioning)
 
 ```mermaid
-flowchart TB
+flowchart LR
 
-P31((3.1 Load Applicable Policy and Profile))
-P32((3.2 Check Attempt Counters and Lockout))
-P33((3.3 Melody Similarity Evaluation))
-P34((3.4 Rhythm Behavioral Distance Evaluation))
-P35((3.5 Weighted Score Fusion and Thresholding))
-P36((3.6 Decision: Accept or Reject))
-P37((3.7 Update Attempts and Trigger Controls))
+P31[3.1 Load Applicable Policy and Profile]
+P32[3.2 Check Attempt Counters and Lockout]
+P33[3.3 Melody Similarity Evaluation]
+P34[3.4 Rhythm Behavioral Distance Evaluation]
+P35[3.5 Weighted Score Fusion and Thresholding]
+P36[3.6 Decision: Accept or Reject]
+P37[3.7 Update Attempts and Trigger Controls]
 
 D2[(D2 Metadata Store)]
 D3[(D3 Auth Profile Store)]
@@ -363,22 +370,25 @@ P36 -->|accept/reject result| P37
 P37 -->|attempt state update| D4
 P36 -->|decision event| D5
 P37 -->|lockout/failure/success event| D5
+
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P31,P32,P33,P34,P35,P36,P37 squared
 ```
 
 ### 6.3 DFD Level 2 for Process 4.0 + 5.0 + 6.0 (Key Derivation, Crypto, Storage, Governance)
 
 ```mermaid
-flowchart TB
+flowchart LR
 
-P41((4.1 Canonical Key Material Composition))
-P42((4.2 KDF Execution and Key Lifecycle Handling))
-P43((4.3 AES-GCM Encrypt/Decrypt Operation))
-P44((4.4 Integrity and AAD Validation))
-P51((5.1 Persist Encrypted Artifact))
-P52((5.2 Persist/Retrieve Metadata))
-P61((6.1 Apply Security Policy Controls))
-P62((6.2 Generate Audit and Compliance Records))
-P63((6.3 Notify User/Admin on Critical Events))
+P41[4.1 Canonical Key Material Composition]
+P42[4.2 KDF Execution and Key Lifecycle Handling]
+P43[4.3 AES-GCM Encrypt/Decrypt Operation]
+P44[4.4 Integrity and AAD Validation]
+P51[5.1 Persist Encrypted Artifact]
+P52[5.2 Persist/Retrieve Metadata]
+P61[6.1 Apply Security Policy Controls]
+P62[6.2 Generate Audit and Compliance Records]
+P63[6.3 Notify User/Admin on Critical Events]
 
 U[User]
 ADM[Security Admin]
@@ -414,6 +424,9 @@ NS -->|delivery status| P63
 
 P51 -->|operation outcome| U
 P63 -->|optional user alert| U
+
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P41,P42,P43,P44,P51,P52,P61,P62,P63 squared
 ```
 
 ---
