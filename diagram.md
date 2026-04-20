@@ -189,7 +189,13 @@ end
 flowchart LR
 
 U[External Entity: User] -->|Melody input, file upload, access request| P0((P0 Melodic Vault System))
+U -->|Login request and auth attempt| P0
+U -->|Profile enrollment or update request| P0
+U -->|Rhythm profile recalibration request| P0
 P0 -->|Encrypted file, access status, alerts| U
+P0 -->|Authentication status and lockout guidance| U
+P0 -->|Enrollment and profile update status| U
+P0 -->|Recalibration result and tolerance update status| U
 
 ADM[External Entity: Security Admin] -->|Policy configuration, audit queries| P0
 P0 -->|Audit reports, security events| ADM

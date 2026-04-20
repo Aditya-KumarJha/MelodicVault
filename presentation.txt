@@ -1,0 +1,281 @@
+Melodic Vault Presentation Script (From My POV)
+
+Title Slide
+Hello everyone.
+I am presenting my project, Melodic Vault.
+Melodic Vault is a secure file protection system where authentication is based on melody plus rhythm behavior, and not only on traditional passwords.
+In this presentation, I will explain the UML and DFD flows exactly as represented in my diagrams.
+
+--------------------------------------------------
+1) Presentation Goal
+What I want to show today is:
+1. Why this system flow is designed this way
+2. How the UML diagrams represent the runtime and structure
+3. How the DFD levels represent data movement from high-level to detailed level
+4. Why these flows are valid from both security and engineering perspective
+
+--------------------------------------------------
+2) Quick Problem Context
+Before diagrams, one line context:
+Traditional password systems are vulnerable because anyone knowing the password can access data.
+My system introduces behavior-based verification using rhythm timing, so authentication is tied to how the user performs input, not only what input is given.
+
+--------------------------------------------------
+3) Architecture Walkthrough Plan
+I will explain in this order:
+1. Class Diagram (core structure)
+2. Activity Diagram (core process path)
+3. Sequence Diagram (interaction timeline)
+4. DFD Level 0 (external context)
+5. DFD Level 1 (major process decomposition)
+6. DFD Level 2 (deep process internals)
+7. Q&A handling and defense points
+
+--------------------------------------------------
+4) Class Diagram Explanation (Core UML Structure)
+Now I will explain my Class Diagram.
+
+At the center is VaultApplication.
+From my perspective, this is my orchestration layer that handles:
+- encryptFile
+- decryptFile
+- enrollProfile
+
+Then I split responsibilities across focused modules:
+- PianoInputController: captures melody/rhythm input
+- MelodyEncoder + RhythmFeatureExtractor: convert raw performance into usable authentication features
+- MatcherEngine: compares current performance with stored user profile
+- KDFService: derives cryptographic key material
+- EncryptionService: does encryption/decryption operations
+- ProfileRepository: stores and loads user auth profiles
+- SecureStorageManager + MetadataRepository: store encrypted artifact and related metadata
+- AttemptTracker: tracks lockout and failed attempts
+- AuditLogger: records security events
+
+Why this class design is correct:
+- It follows separation of concerns.
+- Security logic is not mixed with storage logic.
+- Each module has one clear responsibility.
+- It supports maintainability and future scaling.
+
+--------------------------------------------------
+5) Activity Diagram Explanation (Core Process Logic)
+Now I move to Activity Diagram, where I show control flow.
+
+Start -> Select operation -> decision: Encrypt or Decrypt.
+
+Encrypt branch:
+1. User selects file
+2. User performs melody and rhythm
+3. System extracts features
+4. System derives key using KDF
+5. System encrypts file using AES
+6. System stores encrypted artifact + metadata
+7. End
+
+Decrypt branch:
+1. User requests artifact
+2. System checks lockout and policy
+3. User performs melody and rhythm again
+4. System compares with stored profile
+5. Decision: match or no match
+- If no match: deny access + update attempts
+- If match: derive key, fetch encrypted artifact, decrypt, reset attempts, return plaintext
+
+Why this activity flow is correct:
+- Decision points are explicit.
+- Failure path and success path both exist.
+- Security checks happen before decryption output.
+- Lockout handling is integrated, not optional.
+
+--------------------------------------------------
+6) Sequence Diagram Explanation (Runtime Interaction)
+Now I explain Sequence Diagram, which shows who talks to whom and in what order.
+
+Actors and participants:
+- User
+- VaultApplication API
+- Input controller
+- Feature extraction layer
+- Auth and attempt tracking layer
+- Crypto layer
+- Storage/profile repositories
+
+Encrypt runtime sequence:
+1. User calls encryptFile
+2. API captures performance from input controller
+3. API extracts features
+4. API derives key
+5. API encrypts data
+6. API stores cipher package and metadata
+7. API returns artifactId to user
+
+Decrypt runtime sequence:
+1. User calls decryptFile
+2. API checks lockout status
+3. API captures new performance
+4. API extracts features and loads profile
+5. API compares performance with profile
+6. If reject -> register failed attempt and deny
+7. If match -> derive key, fetch artifact, decrypt, reset attempts, return plaintext
+
+Why this sequence is strong:
+- Ordering is security-first.
+- There is no decrypt-before-auth.
+- Attempt tracking is part of auth path.
+- Data return is only at successful branch end.
+
+--------------------------------------------------
+7) DFD Level 0 Explanation (Context View)
+Now I explain DFD Level 0, which is context-level.
+
+Single process:
+- P0: Melodic Vault System
+
+External entities:
+- User
+- Security Admin
+- Notification Service
+
+User interactions at context level:
+- Melody/file/access request
+- Login/auth attempt
+- Profile enrollment or update request
+- Rhythm profile recalibration request
+
+System responses to user:
+- Encrypted file/access status/alerts
+- Authentication and lockout guidance
+- Enrollment/update status
+- Recalibration/tolerance update status
+
+Admin interactions:
+- Policy configuration and audit queries
+- Audit reports and security events
+
+Notification service:
+- Optional notifications and delivery status
+
+Why Level 0 is correct:
+- Only external entities and one main system process are shown.
+- No internal process breakdown here.
+- No data stores shown at Level 0 by convention.
+
+--------------------------------------------------
+8) DFD Level 1 Explanation (Major Process Breakdown)
+Now I decompose P0 into major internal processes:
+- 1.0 Capture and Validate Input
+- 2.0 Build Features and Profile Data
+- 3.0 Authenticate Performance
+- 4.0 Derive Key and Encrypt/Decrypt
+- 5.0 Store/Retrieve Secure Artifacts
+- 6.0 Governance (policy, attempts, audit)
+
+Data stores:
+- D1 Encrypted Artifact Store
+- D2 Metadata Store
+- D3 Auth Profile Store
+- D4 Attempt State Store
+- D5 Audit Log Store
+- D6 KDF/Config Parameter Store
+
+Important flow logic:
+- User action enters via capture process
+- Feature generation feeds authentication
+- Authentication gates crypto operation
+- Crypto output goes to storage process
+- Governance process applies policy and emits audit/notification events
+
+Why Level 1 is correct:
+- Each process is functionally distinct.
+- Data stores are mapped to appropriate responsibilities.
+- Security governance is represented as a dedicated process.
+
+--------------------------------------------------
+9) DFD Level 2 Explanation (Detailed Internal Logic)
+Level 2 gives deeper decomposition in three critical parts.
+
+A) Level 2 for Process 1.0 + 2.0
+- Session init
+- Event collection
+- Session/device validation
+- Stream sanitation
+- Melody encoding
+- Rhythm feature extraction
+- Quality scoring
+- Optional enrollment template build
+
+B) Level 2 for Process 3.0
+- Load policy and profile
+- Check attempts/lockout
+- Melody similarity
+- Rhythm distance analysis
+- Weighted fusion score
+- Decision accept/reject
+- Update attempts and trigger controls
+
+C) Level 2 for Process 4.0 + 5.0 + 6.0
+- Compose key material
+- Run KDF
+- Perform AES operation
+- Validate integrity/AAD
+- Persist artifact + metadata
+- Apply governance controls
+- Write audit records
+- Trigger notification path
+
+Why Level 2 is correct:
+- It clearly defines where every security decision happens.
+- It prevents hidden logic by making internal checks explicit.
+- It shows complete path from user input to encrypted storage and back.
+
+--------------------------------------------------
+10) Security and Correctness Justification
+If I summarize correctness of full flow:
+- Authentication happens before decryption output.
+- Lockout and attempts are tracked and enforced.
+- Crypto key is derived dynamically from performance features.
+- Storage is for encrypted artifacts and metadata, not plaintext.
+- Audit and governance are included as first-class processes.
+
+--------------------------------------------------
+11) Suggested Closing Statement
+To conclude, my UML diagrams explain component structure and interaction behavior, and my DFD diagrams explain end-to-end data movement at context, decomposition, and detailed levels.
+Together, they validate that Melodic Vault is not only conceptually novel, but also architecturally consistent and security-aware.
+
+--------------------------------------------------
+12) Q&A Defense Script (Possible Questions and My Answers)
+
+Q1) Why do you need both melody and rhythm? Why not only melody?
+A1) Only melody is a knowledge factor and can be copied. Rhythm adds behavioral uniqueness, so authentication is stronger and less transferable.
+
+Q2) Is this flow too complex for a user?
+A2) User-facing flow is simple: perform melody to lock and unlock. Complexity is internal for security handling, not user burden.
+
+Q3) Why is lockout included in multiple places?
+A3) Because lockout is a governance control and must affect authentication decisions consistently. That is why it appears in auth and policy paths.
+
+Q4) Why are there separate metadata and encrypted artifact stores?
+A4) Separation improves maintainability and security posture. Cipher payload and control metadata have different access and lifecycle requirements.
+
+Q5) Why no database shown in DFD Level 0?
+A5) Level 0 is context diagram by standard. It shows external entities and system boundary only. Internal data stores are correctly shown from Level 1 onward.
+
+Q6) Why is profile recalibration needed?
+A6) Human rhythm varies naturally over time. Recalibration maintains usability while preserving security thresholds.
+
+Q7) How do you justify this as correct architecture for external review?
+A7) The architecture follows standard decomposition principles, clear separation of concerns, explicit auth gating before decryption, and full audit/governance paths.
+
+Q8) Could a copied melody still break security?
+A8) A copied note sequence alone is insufficient in this design because rhythm-behavior comparison and tolerance-based biometric matching are required.
+
+Q9) Why derive key each time instead of storing one?
+A9) Dynamic derivation reduces risk of static key exposure and aligns with the behavior-linked authentication model.
+
+Q10) Is this practical in real deployment?
+A10) Yes, with proper tolerance calibration, enrollment quality control, and policy settings. The diagrams include these controls explicitly.
+
+--------------------------------------------------
+13) Final One-Line Pitch for End Slide
+Melodic Vault secures files by combining what the user plays and how they play it, with a flow that is structurally sound in UML and data-secure in DFD.
