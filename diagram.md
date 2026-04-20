@@ -17,40 +17,55 @@ This document provides three complete architecture views for Melodic Vault:
 
 ## 2. Class Diagram (Core Features)
 
+D2 -->|policy refs, allowed drift, thresholds| P31
+D3 -->|melody baseline + behavioral template| P31
+P31 -->|context| P32
+D4 -->|attempt count, lockout state| P32
 ```mermaid
-classDiagram
+flowchart LR
 
-class VaultApplication {
-  +encryptFile(file, userId)
-  +decryptFile(artifactId, userId)
-  +enrollProfile(userId)
-}
+subgraph RowA [ ]
+  direction LR
+  P31[3.1 Load Applicable Policy and Profile] --- P32[3.2 Check Attempt Counters and Lockout] --- P33[3.3 Melody Similarity Evaluation]
+end
 
-class PianoInputController {
-  +startCapture(mode)
-  +stopCapture(sessionId)
-}
+subgraph RowB [ ]
+  direction LR
+  P34[3.4 Rhythm Behavioral Distance Evaluation] --- P35[3.5 Weighted Score Fusion and Thresholding] --- P36[3.6 Decision: Accept or Reject] --- P37[3.7 Update Attempts and Trigger Controls]
+end
 
-class MelodyEncoder {
-  +encode(performance)
-}
+D2[(D2 Metadata Store)]
+D3[(D3 Auth Profile Store)]
+D4[(D4 Attempt State Store)]
+D5[(D5 Audit Log Store)]
 
-class RhythmFeatureExtractor {
-  +extract(performance)
-}
+%% Map columns vertically to keep grid feel
+P31 --> P34
+P32 --> P35
+P33 --> P36
 
-class MatcherEngine {
-  +compare(melody, rhythm, profile)
-}
+D2 -->|policy refs, allowed drift, thresholds| P31
+D3 -->|melody baseline + behavioral template| P31
+P31 -->|context| P32
+D4 -->|attempt count, lockout state| P32
 
-class KDFService {
-  +deriveKey(seed, params)
-}
+P32 -->|if allowed| P33
+P32 -->|if locked| P36
 
-class EncryptionService {
-  +encrypt(bytes, key)
-  +decrypt(cipherPackage, key)
-}
+P33 -->|melody score| P35
+P34 -->|rhythm score| P35
+P31 -->|rhythm template context| P34
+
+P35 -->|combined confidence| P36
+P36 -->|accept/reject result| P37
+
+P37 -->|attempt state update| D4
+P36 -->|decision event| D5
+P37 -->|lockout/failure/success event| D5
+
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P31,P32,P33,P34,P35,P36,P37 squared
+```
 
 class ProfileRepository {
   +saveProfile(profile)
@@ -219,14 +234,6 @@ U[User]
 ADM[Security Admin]
 NS[Notification Service]
 
-%% Processes (square, left-to-right)
-P1[1.0 Capture and Validate Input]
-P2[2.0 Build Features and Profile Data]
-P3[3.0 Authenticate Performance]
-P4[4.0 Derive Key and Encrypt/Decrypt]
-P5[5.0 Store/Retrieve Secure Artifacts]
-P6[6.0 Governance: Policy, Attempts, Audit]
-
 %% Data Stores
 D1[(D1 Encrypted Artifact Store)]
 D2[(D2 Metadata Store)]
@@ -235,24 +242,36 @@ D4[(D4 Attempt State Store)]
 D5[(D5 Audit Log Store)]
 D6[(D6 KDF/Config Parameter Store)]
 
-%% User Flows (LR)
+%% Grid layout: 3 rows x 2 cols to keep overall square
+subgraph Row1 [ ]
+  direction LR
+  P1[1.0 Capture and Validate Input] --- P2[2.0 Build Features and Profile Data]
+end
+
+subgraph Row2 [ ]
+  direction LR
+  P3[3.0 Authenticate Performance] --- P4[4.0 Derive Key and Encrypt/Decrypt]
+end
+
+subgraph Row3 [ ]
+  direction LR
+  P5[5.0 Store/Retrieve Secure Artifacts] --- P6[6.0 Governance: Policy, Attempts, Audit]
+end
+
+%% Vertical connections to show flow while preserving squarish grid
+P1 --> P3
+P2 --> P4
+P3 --> P5
+P4 --> P6
+
+%% External/entity connectors
 U -->|File, melody performance, action| P1
-P1 -->|Sanitized events| P2
-P2 -->|Melody token + rhythm vector| P3
-P3 -->|Auth decision + confidence| P6
-
-%% Governance controls
 ADM -->|Policy updates, threshold config| P6
-P6 -->|Policy context| P3
-P6 -->|KDF policy + crypto constraints| P4
 P6 -->|Notification trigger| NS
-NS -->|Delivery status| P6
 
-%% Auth profile dependencies
+%% Auth profile and persistence links
 P2 -->|Enrollment profile write| D3
 D3 -->|Stored profile/template| P3
-
-%% Attempt/audit state
 P3 -->|Failed/success attempts| D4
 D4 -->|Lockout status, counters| P3
 P3 -->|Security event| D5
@@ -261,21 +280,15 @@ P5 -->|Storage access event| D5
 P6 -->|Governance events| D5
 D5 -->|Audit query results| ADM
 
-%% Crypto path
 P3 -->|Authorized operation request| P4
 D6 -->|KDF parameters, versioning| P4
 P4 -->|Cipher package or plaintext| P5
 
-%% Persistence path
 P5 -->|Write encrypted artifact| D1
 P5 -->|Write metadata| D2
 P5 -->|Read encrypted artifact| D1
 P5 -->|Read metadata| D2
 P5 -->|Operation outcome| U
-
-%% Auxiliary readbacks
-D2 -->|Melody fingerprint, policy refs| P3
-D2 -->|AAD/version refs| P4
 
 %% Styling: make process nodes squared (sharp corners)
 classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
@@ -303,17 +316,24 @@ flowchart LR
 
 U[User]
 
-P11[1.1 Initialize Capture Session]
-P12[1.2 Collect Note Events]
-P13[1.3 Validate Device and Session Integrity]
-P14[1.4 Sanitize and Normalize Event Stream]
-P21[2.1 Encode Canonical Melody Sequence]
-P22[2.2 Extract Rhythm and Timing Features]
-P23[2.3 Compute Quality and Confidence Metrics]
-P24[2.4 Build Enrollment Template - when required]
+subgraph RowA [ ]
+  direction LR
+  P11[1.1 Initialize Capture Session] --- P12[1.2 Collect Note Events] --- P13[1.3 Validate Device and Session Integrity] --- P14[1.4 Sanitize and Normalize Event Stream]
+end
+
+subgraph RowB [ ]
+  direction LR
+  P21[2.1 Encode Canonical Melody Sequence] --- P22[2.2 Extract Rhythm and Timing Features] --- P23[2.3 Compute Quality and Confidence Metrics] --- P24[2.4 Build Enrollment Template - when required]
+end
 
 D3[(D3 Auth Profile Store)]
 D5[(D5 Audit Log Store)]
+
+%% Vertical mapping columns to create a rectangular grid
+P11 --> P21
+P12 --> P22
+P13 --> P23
+P14 --> P24
 
 U -->|Start action + performance| P11
 P11 -->|session token| P12
@@ -380,16 +400,59 @@ class P31,P32,P33,P34,P35,P36,P37 squared
 ```mermaid
 flowchart LR
 
-P41[4.1 Canonical Key Material Composition]
-P42[4.2 KDF Execution and Key Lifecycle Handling]
-P43[4.3 AES-GCM Encrypt/Decrypt Operation]
-P44[4.4 Integrity and AAD Validation]
-P51[5.1 Persist Encrypted Artifact]
-P52[5.2 Persist/Retrieve Metadata]
-P61[6.1 Apply Security Policy Controls]
-P62[6.2 Generate Audit and Compliance Records]
-P63[6.3 Notify User/Admin on Critical Events]
+subgraph Row1 [ ]
+  direction LR
+  P61[6.1 Apply Security Policy Controls] --- P41[4.1 Canonical Key Material Composition] --- P42[4.2 KDF Execution and Key Lifecycle Handling]
+end
 
+subgraph Row2 [ ]
+  direction LR
+  P43[4.3 AES-GCM Encrypt/Decrypt Operation] --- P44[4.4 Integrity and AAD Validation] --- P51[5.1 Persist Encrypted Artifact]
+end
+
+subgraph Row3 [ ]
+  direction LR
+  P52[5.2 Persist/Retrieve Metadata] --- P62[6.2 Generate Audit and Compliance Records] --- P63[6.3 Notify User/Admin on Critical Events]
+end
+
+U[User]
+ADM[Security Admin]
+NS[Notification Service]
+
+D1[(D1 Encrypted Artifact Store)]
+D2[(D2 Metadata Store)]
+D5[(D5 Audit Log Store)]
+D6[(D6 KDF/Config Parameter Store)]
+
+U -->|authorized encrypt/decrypt request| P61
+P61 -->|approved operation| P41
+D6 -->|salt strategy, KDF params, crypto version| P41
+P41 -->|derived seed payload| P42
+P42 -->|symmetric key handle| P43
+P43 -->|cipher package or plaintext| P44
+
+P44 -->|valid package for persistence| P51
+P44 -->|metadata bindings aad hash version| P52
+P51 -->|artifact write/read| D1
+P52 -->|metadata write/read| D2
+
+P61 -->|policy enforcement events| P62
+P44 -->|integrity pass/fail events| P62
+P51 -->|storage access events| P62
+P52 -->|metadata access events| P62
+P62 -->|audit records| D5
+D5 -->|audit reports| ADM
+
+P62 -->|critical alert trigger| P63
+P63 -->|notification message| NS
+NS -->|delivery status| P63
+
+P51 -->|operation outcome| U
+P63 -->|optional user alert| U
+
+classDef squared fill:#f8f8f8,stroke:#333,stroke-width:1,rx:0,ry:0;
+class P41,P42,P43,P44,P51,P52,P61,P62,P63 squared
+```
 U[User]
 ADM[Security Admin]
 NS[Notification Service]
