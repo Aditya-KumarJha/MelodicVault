@@ -21,59 +21,69 @@ This document provides three complete architecture views for Melodic Vault:
 classDiagram
 
 class VaultApplication {
+  -attemptTracker: AttemptTracker
+  -auditLogger: AuditLogger
+  -config: Config
   +encryptFile(file, userId)
   +decryptFile(artifactId, userId)
   +enrollProfile(userId)
+  +getMetadata(artifactId)
 }
 
+%% Row 1 (left-to-right)
 class PianoInputController {
+  -deviceId: string
   +startCapture(mode)
   +stopCapture(sessionId)
 }
 
 class MelodyEncoder {
+  -encodingParams: Map
   +encode(performance)
+  +canonicalize(melody)
 }
 
 class RhythmFeatureExtractor {
+  -windowMs: int
   +extract(performance)
+  +normalizeTiming(performance)
 }
 
+%% Row 2 (left-to-right)
 class MatcherEngine {
+  -thresholds: Map
   +compare(melody, rhythm, profile)
+  +score(melody, rhythm, profile)
 }
 
 class KDFService {
+  -kdfParams: Map
   +deriveKey(seed, params)
 }
 
 class EncryptionService {
+  -cipherVersion: string
   +encrypt(bytes, key)
   +decrypt(cipherPackage, key)
 }
 
+%% Row 3 (left-to-right)
 class ProfileRepository {
+  -storageRef: string
   +saveProfile(profile)
   +loadProfile(userId, artifactId)
 }
 
 class SecureStorageManager {
+  -storageBackend: string
   +storeEncryptedArtifact(cipherPackage)
   +fetchEncryptedArtifact(artifactId)
 }
 
 class MetadataRepository {
+  -indexRef: string
   +saveMeta(meta)
   +getMeta(artifactId)
-}
-
-class AttemptTracker {
-  +isLockedOut(userId, artifactId)
-  +registerAttempt(userId, artifactId, success)
-}
-
-class AuditLogger {
-  +logSecurityEvent(event)
 }
 
 VaultApplication --> PianoInputController
@@ -85,8 +95,6 @@ VaultApplication --> EncryptionService
 VaultApplication --> ProfileRepository
 VaultApplication --> SecureStorageManager
 VaultApplication --> MetadataRepository
-VaultApplication --> AttemptTracker
-VaultApplication --> AuditLogger
 ```
 
 ---
@@ -98,28 +106,37 @@ VaultApplication --> AuditLogger
 ```mermaid
 flowchart TD
 
-A[Start] --> B[Select operation]
-B --> C{Encrypt or Decrypt}
+Start([Start]) --> Auth{Authenticate}
+Auth -->|Login| Login[Login]
+Auth -->|Signup| Signup[Signup / Enrollment]
+Login --> SelectOp[Select operation]
+Signup --> Enroll[Perform enrollment samples]
+Enroll --> SelectOp
 
-C -->|Encrypt| E1[Select file]
-E1 --> E2[Capture melody and rhythm]
-E2 --> E3[Extract melody and rhythm features]
-E3 --> E4[Derive key using KDF]
-E4 --> E5[Encrypt file using AES]
-E5 --> E6[Store encrypted artifact and metadata]
-E6 --> Z[End]
+SelectOp --> Choice{Encrypt or Decrypt}
 
-C -->|Decrypt| D1[Request artifact]
-D1 --> D2[Check lockout and policy]
-D2 --> D3[Capture melody and rhythm]
-D3 --> D4[Compare against stored profile]
-D4 --> D5{Match result}
-D5 -->|No| D6[Deny access and update attempts]
-D6 --> Z
-D5 -->|Yes| D7[Derive key using KDF]
-D7 --> D8[Fetch and decrypt artifact]
-D8 --> D9[Return plaintext and reset attempts]
-D9 --> Z
+Choice -->|Encrypt| EncFile[Select file to encrypt]
+EncFile --> EncCapture[Capture melody & rhythm]
+EncCapture --> EncExtract[Extract features]
+EncExtract --> EncKDF[Derive key via KDF]
+EncKDF --> EncCrypto[Encrypt with AES-GCM]
+EncCrypto --> EncStore[Store cipher + metadata]
+EncStore --> EndEncrypt([End - encrypted])
+
+Choice -->|Decrypt| Req[Request artifact]
+Req --> PolicyCheck[Check lockout & policy]
+PolicyCheck --> DecCapture[Capture melody & rhythm]
+DecCapture --> DecExtract[Extract features]
+DecExtract --> LoadProfile[Load profile & thresholds]
+LoadProfile --> Compare[Compare features]
+Compare -->|Reject| Deny[Deny access + update attempts]
+Deny --> EndReject([End - denied])
+Compare -->|Accept| DecKDF[Derive key]
+DecKDF --> FetchDecrypt[Fetch cipher & decrypt]
+FetchDecrypt --> ReturnPlain[Return plaintext]
+ReturnPlain --> EndDecrypt([End - success])
+
+style Start fill:#f9f,stroke:#333,stroke-width:1px
 ```
 
 ### 3.2 Sequence Diagram (Core Features)
