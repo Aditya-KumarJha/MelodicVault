@@ -188,12 +188,12 @@ end
 ```mermaid
 flowchart LR
 
-U[External Entity: User<br/>Primary Actor] -->|1) Melody input + file upload + access request| P0((P0 Melodic Vault System))
-P0 -->|1) Encrypted file + access status| U
-U -->|2) Login request + auth attempt| P0
-P0 -->|2) Authentication status + lockout guidance| U
-U -->|3) Rhythm profile recalibration request| P0
-P0 -->|3) Recalibration result + tolerance update status| U
+U[External Entity: User<br/>Primary Actor] -->|Melody input, file upload, access request| P0((P0 Melodic Vault System))
+P0 -->|Encrypted file, access status| U
+U -->|Login request, auth attempt| P0
+P0 -->|Authentication status, lockout guidance| U
+U -->|Rhythm profile recalibration request| P0
+P0 -->|Recalibration result, tolerance update status| U
 
 ADM[External Entity: Security Admin] -->|Policy configuration, audit queries| P0
 P0 -->|Audit reports, security events| ADM
