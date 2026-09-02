@@ -1,0 +1,17 @@
+{
+  "name": "Melodic Vault",
+  "short_name": "Melodic Vault",
+  "description": "AI-assisted uptime monitoring and incident intelligence.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0C10",
+  "theme_color": "#1E6BFF",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
