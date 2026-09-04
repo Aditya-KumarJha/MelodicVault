@@ -12,7 +12,7 @@ const DashboardPage = lazy(() => import('./pages/dashboard').then((m) => ({ defa
 const SignInPage = lazy(() => import('./pages/auth').then((m) => ({ default: m.SignInPage })));
 const SignUpPage = lazy(() => import('./pages/auth').then((m) => ({ default: m.SignUpPage })));
 const RecoverPassword = lazy(() => import('./pages/auth/RecoverPassword'));
-
+const CreateVaultPage = lazy(() => import('./pages/vault/createvault').then((m) => ({ default: m.CreateVault })));
 // UI Components
 const SkeletonBlock = ({ className = '' }) => (
   <div className={`animate-pulse rounded-xl border-[3px] border-black bg-white/70 ${className}`} />

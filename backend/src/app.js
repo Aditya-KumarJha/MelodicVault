@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./modules/auth/auth.routes.js";
+import vaultRoutes from "./modules/vault/vault.routes.js";
 import { isOriginAllowed } from "./utils/origin.js";
 
 const app = express();
@@ -33,7 +34,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "4mb" }));
 
 app.use("/api/auth", authRoutes);
-
+app.use("/api/vault", vaultRoutes);
 app.get("/", (req, res) => {
   res.json({
     status: "ok",

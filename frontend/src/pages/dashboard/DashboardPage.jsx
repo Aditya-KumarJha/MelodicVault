@@ -17,9 +17,11 @@ import { MobileNav, SidebarContent } from './components/Navigation';
 import { navItems } from './dashboardData';
 import { SEO } from '../../components/seo';
 import { updateProfile } from '../../services/authApi';
+import VaultUpload from './components/VaultUpload';
 import { setAuthUser } from '../../store/authSlice';
 import { toast } from 'react-toastify';
-
+import MidiKeyRecorder from './components/MidiKeyRecorder';
+import UnlockVault from './UnlockVault';
 const stats = [
   { label: 'Vaults', value: '03', tone: 'bg-[#FFD600]' },
   { label: 'Local crypto', value: 'AES-GCM', tone: 'bg-[#00E676]' },
@@ -385,7 +387,12 @@ const DashboardPage = () => {
                     </article>
                   ))}
                 </section>
-
+                {activeView === 'create' && (
+                  <VaultUpload />
+                )}
+                {activeView === 'unlock' && (
+                  <UnlockVault />
+                )}
                 {activeView === 'settings' && (
                   <section className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1E6BFF]">Profile settings</p>
@@ -393,7 +400,9 @@ const DashboardPage = () => {
                     <p className="mt-2 text-sm font-bold text-black/65">Click your profile chip in the top-right corner to update your name, username, or picture.</p>
                   </section>
                 )}
-
+                {activeView === 'melody' && (
+                  <MidiKeyRecorder />
+                )}
                 <section className="rounded-2xl border-4 border-black bg-black p-5 text-white shadow-[7px_7px_0_#0F172A]">
                   <div className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
                     <span className="grid h-14 w-14 place-items-center rounded-xl border-[3px] border-white bg-[#00E676] text-black">
