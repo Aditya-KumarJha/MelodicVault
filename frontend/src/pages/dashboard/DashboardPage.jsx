@@ -22,6 +22,7 @@ import { setAuthUser } from '../../store/authSlice';
 import { toast } from 'react-toastify';
 import MidiKeyRecorder from './components/MidiKeyRecorder';
 import UnlockVault from './UnlockVault';
+import VaultHistory from './VaultHistory';
 const stats = [
   { label: 'Vaults', value: '03', tone: 'bg-[#FFD600]' },
   { label: 'Local crypto', value: 'AES-GCM', tone: 'bg-[#00E676]' },
@@ -322,6 +323,10 @@ const DashboardPage = () => {
 
             <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-24 lg:pb-0">
               <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:px-8">
+                {activeView === 'history' ? (
+                  <VaultHistory />
+                ) : (
+                  <>
                 <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
                   <div className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
                     <p className="inline-flex border-[3px] border-black bg-[#00E676] px-3 py-1 text-xs font-black uppercase italic tracking-[0.16em]">
@@ -416,6 +421,8 @@ const DashboardPage = () => {
                     </div>
                   </div>
                 </section>
+                  </>
+                )}
               </div>
             </div>
           </section>

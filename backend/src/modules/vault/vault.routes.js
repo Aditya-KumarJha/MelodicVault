@@ -6,6 +6,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { uploadVaultFile } from "./vault.controller.js";
+import { createVaultRecord, getVaultHistory } from "./vault.controller.js";
+import { authenticate } from "../auth/auth.middleware.js";
 
 const router = express.Router();
 
@@ -58,5 +60,8 @@ router.post(
     upload.single("file"),
     uploadVaultFile
 );
+
+router.get("/history", authenticate, getVaultHistory);
+router.post("/history", authenticate, createVaultRecord);
 
 export default router;
