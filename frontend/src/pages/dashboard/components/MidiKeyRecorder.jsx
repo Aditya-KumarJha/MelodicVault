@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Music2, CircleStop, Play, Trash2, KeyRound, Upload, FileMusic } from 'lucide-react';
 import { Midi } from '@tonejs/midi';
 
-import { MAX_NOTES, QUANTIZATION_MS, buildSignature, deriveMelodyHash, getNoteName } from '../../../services/melodyCrypto';
+import { MAX_NOTES, QUANTIZATION_MS, buildSignature, bufferToHex, deriveMelodyHash, getNoteName } from '../../../services/melodyCrypto';
+
+const STORAGE_KEY = 'melodic-vault-keys';
 
 const loadSavedKeys = () => {
   try {
@@ -323,7 +325,7 @@ const MidiKeyRecorder = () => {
       setError('');
 
       const signature = buildSignature(notes);
-      const keyHash =bufferToHex(await deriveMelodyHash(signature));
+      const keyHash = bufferToHex(await deriveMelodyHash(signature));
 
       const newKey = {
         id: crypto.randomUUID(),
@@ -486,7 +488,7 @@ const MidiKeyRecorder = () => {
 
   <label
     htmlFor="midi-file"
-    className="mt-4 inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl border-[3px] border-black bg-[#1E6BFF] px-5 text-sm font-black uppercase italic text-white shadow-[4px_4px_0_#0F172A] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0F172A]"
+    className="mt-4 inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl border-[3px] border-black bg-[#1E6BFF] px-5 text-sm font-black uppercase italic text-white shadow-[4px_4px_0_#0F172A] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#0F172A]"
   >
     <Upload size={18} strokeWidth={3} />
     Choose .MID File
@@ -518,7 +520,7 @@ const MidiKeyRecorder = () => {
               {notes.map((note, index) => (
                 <div
                   key={`${note.timestamp}-${index}`}
-                  className="rounded-lg border-[2px] border-black bg-white px-3 py-2 text-center shadow-[2px_2px_0_#0F172A]"
+                  className="rounded-lg border-2 border-black bg-white px-3 py-2 text-center shadow-[2px_2px_0_#0F172A]"
                 >
                   <p className="text-sm font-black">
                     {getNoteName(note.note)}
@@ -624,7 +626,7 @@ const MidiKeyRecorder = () => {
                 <button
                   type="button"
                   onClick={() => deleteKey(key.id)}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border-[2px] border-black bg-red-300 px-4 text-xs font-black uppercase shadow-[2px_2px_0_#0F172A]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border-2 border-black bg-red-300 px-4 text-xs font-black uppercase shadow-[2px_2px_0_#0F172A]"
                 >
                   <Trash2 size={15} strokeWidth={3} />
                   Delete

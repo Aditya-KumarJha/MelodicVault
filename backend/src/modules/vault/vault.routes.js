@@ -57,6 +57,7 @@ const upload = multer({
 
 router.post(
     "/upload",
+    authenticate,
     upload.single("file"),
     uploadVaultFile
 );

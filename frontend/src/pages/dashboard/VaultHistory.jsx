@@ -80,27 +80,27 @@ const VaultHistory = () => {
       )}
 
       {!error && !isLoading && records.length > 0 && (
-        <div className="mt-5 overflow-x-auto border-3 border-black">
-          <table className="w-full min-w-[680px] border-collapse text-left">
-            <thead className="bg-[#1E6BFF] text-xs uppercase text-white">
-              <tr>
-                <th className="border-b-3 border-black p-3 font-black">File</th>
-                <th className="border-b-3 border-black p-3 font-black">Status</th>
-                <th className="border-b-3 border-black p-3 font-black">Protection</th>
-                <th className="border-b-3 border-black p-3 font-black">Locked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.map((record) => (
-                <tr key={record._id} className="border-b-2 border-black last:border-b-0 hover:bg-[#FFF4B8]">
-                  <td className="p-3"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center border-2 border-black bg-[#00E676]"><FileArchive size={17} strokeWidth={3} /></span><span><strong className="block max-w-[230px] truncate text-sm font-black">{record.fileName}</strong><small className="font-bold text-black/55">{formatBytes(record.fileSize)}</small></span></div></td>
-                  <td className="p-3"><span className="inline-flex items-center gap-1 border-2 border-black bg-[#00E676] px-2 py-1 text-[10px] font-black uppercase"><ShieldCheck size={13} strokeWidth={3} /> {record.status}</span></td>
-                  <td className="p-3 text-sm font-bold">{record.algorithm || 'AES-256-GCM'}{record.melodyLength ? <small className="block text-xs text-black/55">{record.melodyLength} notes</small> : null}</td>
-                  <td className="p-3 text-sm font-bold">{formatDate(record.createdAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {records.map((record) => (
+            <article key={record._id} className="border-3 border-black bg-[#FDFBF7] p-4 shadow-[4px_4px_0_#0F172A]">
+              <div className="flex items-start justify-between gap-3 border-b-2 border-black pb-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center border-2 border-black bg-[#00E676]"><FileArchive size={18} strokeWidth={3} /></span>
+                  <div className="min-w-0">
+                    <h4 className="truncate text-base font-black">{record.fileName}</h4>
+                    <p className="text-xs font-bold text-black/55">{formatBytes(record.fileSize)}{record.mimeType ? ` | ${record.mimeType}` : ''}</p>
+                  </div>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1 border-2 border-black bg-[#00E676] px-2 py-1 text-[10px] font-black uppercase"><ShieldCheck size={13} strokeWidth={3} /> {record.status}</span>
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div><dt className="font-black uppercase text-black/50">Protection</dt><dd className="mt-1 font-black">{record.algorithm || 'AES-256-GCM'}</dd></div>
+                <div><dt className="font-black uppercase text-black/50">Melody input</dt><dd className="mt-1 font-black">{record.melodyLength || 0} notes</dd></div>
+                <div><dt className="font-black uppercase text-black/50">Backup</dt><dd className="mt-1 font-black">{record.hasRecoveryPhrase === false ? 'Melody only' : 'Recovery phrase ready'}</dd></div>
+                <div><dt className="font-black uppercase text-black/50">Encrypted</dt><dd className="mt-1 font-black">{formatDate(record.createdAt)}</dd></div>
+              </dl>
+            </article>
+          ))}
         </div>
       )}
     </section>

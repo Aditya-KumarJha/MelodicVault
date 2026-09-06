@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { Midi } from '@tonejs/midi';
+import { mnemonicToSeedSync } from '@scure/bip39';
 
 import {
   MAX_NOTES,
@@ -26,6 +27,19 @@ import {
   deriveMelodyKey,
   base64ToUint8Array,
 } from '../../services/melodyCrypto.js';
+
+const deriveRecoveryKey = async (mnemonic) => {
+  const seed = mnemonicToSeedSync(mnemonic.trim());
+  const hash = await crypto.subtle.digest('SHA-256', seed);
+
+  return crypto.subtle.importKey(
+    'raw',
+    hash,
+    { name: 'AES-GCM' },
+    false,
+    ['unwrapKey']
+  );
+};
 
 
 const UnlockVault = () => {
@@ -65,6 +79,12 @@ const UnlockVault = () => {
   const [signature, setSignature] =
     useState('');
 
+  const [recoveryWords, setRecoveryWords] =
+    useState(() => Array(12).fill(''));
+
+  const recoveryPhrase =
+    recoveryWords.join(' ').trim();
+
   const [status, setStatus] =
     useState('');
 
@@ -76,6 +96,33 @@ const UnlockVault = () => {
 
   const [unlocked, setUnlocked] =
     useState(false);
+
+  const updateRecoveryWord = (index, value) => {
+    const word = value.trim().split(/\s+/)[0] || '';
+    setRecoveryWords((currentWords) =>
+      currentWords.map((currentWord, wordIndex) =>
+        wordIndex === index ? word : currentWord
+      )
+    );
+  };
+
+  const pasteRecoveryPhrase = (event, index) => {
+    const pastedWords = event.clipboardData
+      .getData('text')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 12);
+
+    if (pastedWords.length > 1) {
+      event.preventDefault();
+      setRecoveryWords((currentWords) => currentWords.map((word, wordIndex) =>
+        wordIndex >= index && wordIndex < index + pastedWords.length
+          ? pastedWords[wordIndex - index]
+          : word
+      ));
+    }
+  };
 
 
   /*
@@ -599,9 +646,9 @@ const UnlockVault = () => {
       return;
     }
 
-    if (!signature) {
+    if (!signature && !recoveryPhrase) {
       setError(
-        'Play the melody or upload the original .mid file first.'
+        'Play the melody, upload the original .mid file, or enter your recovery phrase.'
       );
 
       return;
@@ -610,30 +657,19 @@ const UnlockVault = () => {
     setUnlocking(true);
 
     try {
-      /*
-       * The important part:
-       *
-       * We derive the key ONLY from the newly
-       * supplied melody.
-       *
-       * Nothing is read from localStorage.
-       */
-
-      const melodyKey =
-        await deriveMelodyKey(
-          signature
-        );
+      const usingRecoveryPhrase = Boolean(recoveryPhrase);
+      const unlockKey = usingRecoveryPhrase
+        ? await deriveRecoveryKey(recoveryPhrase)
+        : await deriveMelodyKey(signature);
 
       const wrappedKey =
         base64ToUint8Array(
-          vault.encryption
-            .melodyWrappedKey
+          vault.encryption[usingRecoveryPhrase ? 'recoveryWrappedKey' : 'melodyWrappedKey']
         );
 
       const wrapIv =
         base64ToUint8Array(
-          vault.encryption
-            .melodyWrapIv
+          vault.encryption[usingRecoveryPhrase ? 'recoveryWrapIv' : 'melodyWrapIv']
         );
 
       let fileKey;
@@ -643,7 +679,7 @@ const UnlockVault = () => {
           await crypto.subtle.unwrapKey(
             'raw',
             wrappedKey,
-            melodyKey,
+            unlockKey,
             {
               name: 'AES-GCM',
               iv: wrapIv,
@@ -657,7 +693,9 @@ const UnlockVault = () => {
           );
       } catch {
         throw new Error(
-          'The melody does not match this vault.'
+          usingRecoveryPhrase
+            ? 'The recovery phrase does not match this vault.'
+            : 'The melody does not match this vault.'
         );
       }
 
@@ -686,7 +724,9 @@ const UnlockVault = () => {
           );
       } catch {
         throw new Error(
-          'The melody does not match this vault, or the vault is corrupted.'
+          usingRecoveryPhrase
+            ? 'The recovery phrase does not match this vault, or the vault is corrupted.'
+            : 'The melody does not match this vault, or the vault is corrupted.'
         );
       }
 
@@ -825,10 +865,10 @@ const UnlockVault = () => {
             </p>
 
             <p className="mt-1 text-sm text-amber-800">
-              Unlocking requires a fresh melody
-              played through MIDI or the original
-              MIDI file. The stored melody keys in
-              localStorage are never read.
+              Unlock with a fresh melody or your
+              12-word recovery phrase. Both methods
+              run locally; the backend never receives
+              either secret.
             </p>
           </div>
 
@@ -1134,6 +1174,40 @@ const UnlockVault = () => {
       </section>
 
 
+      {/* Recovery phrase alternative */}
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-sm font-semibold text-slate-900">
+            +
+          </span>
+          <div>
+            <h2 className="font-semibold text-slate-900">Use recovery phrase</h2>
+            <p className="text-sm text-slate-500">Optional alternative when you cannot reproduce the melody.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {recoveryWords.map((word, index) => (
+            <label key={`recovery-word-${index}`} className="relative">
+              <span className="absolute left-3 top-2 text-[10px] font-black text-slate-400">{index + 1}</span>
+              <input
+                type="text"
+                value={word}
+                onChange={(event) => updateRecoveryWord(index, event.target.value)}
+                onPaste={(event) => pasteRecoveryPhrase(event, index)}
+                autoComplete="off"
+                spellCheck="false"
+                aria-label={`Recovery word ${index + 1}`}
+                className="h-16 w-full rounded-xl border-2 border-slate-300 px-3 pb-2 pt-6 text-sm font-semibold text-slate-800 outline-none focus:border-slate-900"
+              />
+            </label>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-500">Enter all 12 words in the original order. Pasting the full phrase fills the boxes automatically.</p>
+      </section>
+
+
       {/* Step 3 */}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1164,7 +1238,7 @@ const UnlockVault = () => {
           }
           disabled={
             !vault ||
-            !signature ||
+            (!signature && !recoveryPhrase) ||
             unlocking
           }
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"

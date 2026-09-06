@@ -36,7 +36,7 @@ export const getVaultHistory = async (req, res) => {
         const records = await VaultRecord.find({ user: req.user._id })
             .sort({ createdAt: -1 })
             .limit(100)
-            .select('fileName fileSize status algorithm melodyLength createdAt updatedAt')
+            .select('fileName fileSize mimeType status algorithm melodyLength hasRecoveryPhrase createdAt updatedAt')
             .lean();
 
         return res.json({ records });
@@ -47,19 +47,34 @@ export const getVaultHistory = async (req, res) => {
 };
 
 export const createVaultRecord = async (req, res) => {
-    const { fileName, fileSize, status, algorithm, melodyLength } = req.body;
+    const { fileName, fileSize, mimeType, algorithm, melodyLength, hasRecoveryPhrase } = req.body;
+    const normalizedFileName = typeof fileName === 'string' ? fileName.trim() : '';
 
-    if (!fileName || typeof fileName !== 'string') {
+    if (!normalizedFileName) {
         return res.status(400).json({ message: 'A file name is required' });
+    }
+
+    if (normalizedFileName.length > 255 || (mimeType && mimeType.length > 255)) {
+        return res.status(400).json({ message: 'Vault metadata is too long' });
+    }
+
+    if (fileSize !== undefined && (!Number.isFinite(fileSize) || fileSize < 0)) {
+        return res.status(400).json({ message: 'File size must be a non-negative number' });
+    }
+
+    if (melodyLength !== undefined && (!Number.isInteger(melodyLength) || melodyLength < 0)) {
+        return res.status(400).json({ message: 'Melody length must be a non-negative integer' });
     }
 
     const record = await VaultRecord.create({
         user: req.user._id,
-        fileName,
+        fileName: normalizedFileName,
         fileSize,
-        status,
-        algorithm,
+        mimeType: mimeType || undefined,
+        status: 'locked',
+        algorithm: algorithm || 'AES-256-GCM',
         melodyLength,
+        hasRecoveryPhrase: hasRecoveryPhrase !== false,
     });
 
     return res.status(201).json({ record });

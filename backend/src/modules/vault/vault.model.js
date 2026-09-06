@@ -5,9 +5,11 @@ const vaultRecordSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     fileName: { type: String, required: true, trim: true, maxlength: 255 },
     fileSize: { type: Number, min: 0, default: 0 },
+    mimeType: { type: String, trim: true, maxlength: 255, default: 'application/octet-stream' },
     status: { type: String, enum: ['locked', 'unlocked', 'failed'], default: 'locked' },
     algorithm: { type: String, trim: true, maxlength: 50, default: 'AES-256-GCM' },
     melodyLength: { type: Number, min: 0, default: 0 },
+    hasRecoveryPhrase: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -4,12 +4,14 @@ import {
   KeyRound,
   LockKeyhole,
   Download,
+  Copy,
   CheckCircle2,
   ShieldCheck,
 } from 'lucide-react';
 
 import { wordlist } from '@scure/bip39/wordlists/english.js';
 import { generateMnemonic, mnemonicToSeedSync } from '@scure/bip39';
+import { createVaultRecord } from '../../../services/vaultAPI.js';
 
 const STORAGE_KEY = 'melodic-vault-keys';
 
@@ -293,6 +295,9 @@ const VaultUpload = () => {
   const [recoveryPhrase, setRecoveryPhrase] =
     useState('');
 
+  const [phraseCopied, setPhraseCopied] =
+    useState(false);
+
   const [vault, setVault] =
     useState(null);
 
@@ -405,6 +410,15 @@ const VaultUpload = () => {
           mnemonic,
         });
 
+      await createVaultRecord({
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        algorithm: 'AES-256-GCM',
+        melodyLength: selectedKey.noteCount,
+        hasRecoveryPhrase: true,
+      });
+
       setVault(generatedVault);
 
       setRecoveryPhrase(mnemonic);
@@ -443,6 +457,24 @@ const VaultUpload = () => {
       file.name
         .replace(/\.[^/.]+$/, '')
     );
+  };
+
+  const handleCopyRecoveryPhrase = async () => {
+    await navigator.clipboard.writeText(recoveryPhrase);
+    setPhraseCopied(true);
+    window.setTimeout(() => setPhraseCopied(false), 2000);
+  };
+
+  const handleDownloadRecoveryPhrase = () => {
+    const phraseBlob = new Blob([`${recoveryPhrase}\n`], { type: 'text/plain' });
+    const url = URL.createObjectURL(phraseBlob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${file?.name.replace(/\.[^/.]+$/, '') || 'melodic-vault'}-recovery.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -700,7 +732,7 @@ const VaultUpload = () => {
                 .map((word, index) => (
                   <div
                     key={`${word}-${index}`}
-                    className="rounded-lg border-[2px] border-black bg-[#FDFBF7] p-3"
+                    className="rounded-lg border-2 border-black bg-[#FDFBF7] p-3"
                   >
 
                     <p className="text-[10px] font-black text-black/40">
@@ -721,6 +753,25 @@ const VaultUpload = () => {
               to recover your vault. Do not share it.
               Melodic Vault does not store this phrase.
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleCopyRecoveryPhrase}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border-[3px] border-black bg-[#00E676] px-4 text-xs font-black uppercase italic shadow-[3px_3px_0_#0F172A]"
+              >
+                <Copy size={16} strokeWidth={3} />
+                {phraseCopied ? 'Copied' : 'Copy phrase'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadRecoveryPhrase}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border-[3px] border-black bg-white px-4 text-xs font-black uppercase italic shadow-[3px_3px_0_#0F172A]"
+              >
+                <Download size={16} strokeWidth={3} />
+                Download phrase
+              </button>
+            </div>
 
           </div>
 

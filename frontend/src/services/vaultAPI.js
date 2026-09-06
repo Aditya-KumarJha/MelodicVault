@@ -35,3 +35,18 @@ export const fetchVaultHistory = async () => {
   if (!response.ok) throw new Error(data.message || 'Could not load vault history');
   return data.records || [];
 };
+
+export const createVaultRecord = async (metadata) => {
+  const response = await fetch(`${API_URL}/api/vault/history`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(metadata),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Could not save vault metadata');
+  return data.record;
+};
