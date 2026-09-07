@@ -1,100 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Download,
   Camera,
   Check,
-  KeyRound,
   Menu,
-  Music2,
   ShieldCheck,
-  Upload,
-  Waves,
   X,
 } from 'lucide-react';
 import { MobileNav, SidebarContent } from './components/Navigation';
 import { navItems } from './dashboardData';
 import { SEO } from '../../components/seo';
 import { updateProfile } from '../../services/authApi';
+import { fetchVaultHistory } from '../../services/vaultApi';
 import VaultUpload from './components/VaultUpload';
+import VaultStats from './components/VaultStats';
 import { setAuthUser } from '../../store/authSlice';
 import { toast } from 'react-toastify';
 import MidiKeyRecorder from './components/MidiKeyRecorder';
 import UnlockVault from './UnlockVault';
 import VaultHistory from './VaultHistory';
-const stats = [
-  { label: 'Vaults', value: '03', tone: 'bg-[#FFD600]' },
-  { label: 'Local crypto', value: 'AES-GCM', tone: 'bg-[#00E676]' },
-  { label: 'Secrets stored', value: '0', tone: 'bg-white' },
-];
-
-const viewCopy = {
-  overview: {
-    eyebrow: 'User dashboard',
-    title: 'Your melodic vault workspace',
-    copy: 'Lock files with a reproducible melody and timing pattern. The backend keeps account and vault metadata only; encryption keys stay on the client.',
-  },
-  create: {
-    eyebrow: 'Lock flow',
-    title: 'Create a new vault artifact',
-    copy: 'Select a file, capture note order plus rhythm, derive key material locally, then export a portable .vault file.',
-  },
-  unlock: {
-    eyebrow: 'Unlock flow',
-    title: 'Recover a file with the same performance',
-    copy: 'Upload a .vault artifact, replay the melody pattern, and let authenticated decryption accept or reject the attempt.',
-  },
-  melody: {
-    eyebrow: 'Input module',
-    title: 'Capture melody and timing',
-    copy: 'The MVP can start with virtual note entry and simulated timing before ESP32 or MIDI capture is added.',
-  },
-  history: {
-    eyebrow: 'Metadata only',
-    title: 'Track encrypted activity',
-    copy: 'Vault history should store names, timestamps, status, and non-secret metadata. No plaintext files or raw melody secrets belong here.',
-  },
-  security: {
-    eyebrow: 'Security posture',
-    title: 'Derive, encrypt, discard',
-    copy: 'Melodic Vault is designed around deterministic representation, KDF output, AES-256-GCM encryption, and wrong-melody rejection.',
-  },
-  settings: {
-    eyebrow: 'Account',
-    title: 'User profile and vault preferences',
-    copy: 'Keep simple account settings here while the core product focuses on the vault workflow.',
-  },
-};
-
-const workflowCards = [
-  {
-    icon: Upload,
-    title: 'Choose File',
-    copy: 'Pick the document or artifact you want to protect.',
-    badge: 'INPUT',
-  },
-  {
-    icon: Music2,
-    title: 'Play Pattern',
-    copy: 'Capture notes, intervals, and hold timing as deterministic data.',
-    badge: 'MELODY',
-  },
-  {
-    icon: KeyRound,
-    title: 'Derive Key',
-    copy: 'Transform the canonical melody into local cryptographic material.',
-    badge: 'KDF',
-  },
-  {
-    icon: Download,
-    title: 'Export Vault',
-    copy: 'Encrypt locally and download a .vault artifact for storage.',
-    badge: 'AES-GCM',
-  },
-];
-
-const pianoKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C2'];
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -105,11 +30,30 @@ const DashboardPage = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ firstName: '', lastName: '', username: '', profileImage: '' });
+  const [vaultRecords, setVaultRecords] = useState([]);
+  const [isLoadingVaults, setIsLoadingVaults] = useState(true);
   const authUser = useSelector((state) => state.auth.user);
+
+  // Fetch vault history on component mount
+  useEffect(() => {
+    const loadVaultHistory = async () => {
+      try {
+        setIsLoadingVaults(true);
+        const records = await fetchVaultHistory();
+        setVaultRecords(records || []);
+      } catch (error) {
+        console.error('Failed to load vault history:', error);
+        setVaultRecords([]);
+      } finally {
+        setIsLoadingVaults(false);
+      }
+    };
+    loadVaultHistory();
+  }, []);
+
   const validViewIds = navItems.map((item) => item.id);
   const activeView = validViewIds.includes(view) ? view : 'overview';
   const activeNavItem = navItems.find((item) => item.id === activeView);
-  const activeCopy = viewCopy[activeView] || viewCopy.overview;
 
   const displayName = useMemo(() => {
     const first = authUser?.fullName?.firstName;
@@ -327,71 +271,9 @@ const DashboardPage = () => {
                   <VaultHistory />
                 ) : (
                   <>
-                <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-                  <div className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
-                    <p className="inline-flex border-[3px] border-black bg-[#00E676] px-3 py-1 text-xs font-black uppercase italic tracking-[0.16em]">
-                      {activeCopy.eyebrow}
-                    </p>
-                    <h2 className="mt-4 max-w-3xl text-4xl font-black uppercase italic leading-[0.9] text-[#FFD600] drop-shadow-[3px_3px_0_black] sm:text-6xl">
-                      {activeCopy.title}
-                    </h2>
-                    <p className="mt-5 max-w-2xl border-l-[6px] border-black bg-[#FDFBF7] p-4 text-sm font-black uppercase leading-6 text-black/75">
-                      {activeCopy.copy}
-                    </p>
-                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                      {stats.map((item) => (
-                        <div key={item.label} className={`${item.tone} rounded-xl border-[3px] border-black p-3 shadow-[4px_4px_0_#0F172A]`}>
-                          <div className="text-2xl font-black uppercase italic">{item.value}</div>
-                          <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-black/55">{item.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border-4 border-black bg-[#FFC0CB] p-5 shadow-[7px_7px_0_#0F172A]">
-                    <div className="rounded-xl border-[3px] border-black bg-white p-4">
-                      <div className="flex items-center justify-between border-b-[3px] border-black pb-3">
-                        <span className="text-xs font-black uppercase tracking-[0.16em]">Melody input</span>
-                        <Waves size={20} strokeWidth={3} />
-                      </div>
-                      <div className="mt-5 flex h-40 items-end gap-1.5">
-                        {pianoKeys.map((key, index) => (
-                          <button
-                            key={key}
-                            type="button"
-                            className={`flex min-w-0 flex-1 items-end justify-center border-[3px] border-black pb-3 text-xs font-black shadow-[3px_3px_0_#0F172A] ${
-                              index % 3 === 1 ? 'h-32 bg-[#1E6BFF] text-white' : 'h-40 bg-[#FDFBF7] text-black'
-                            }`}
-                          >
-                            {key}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="mt-5 grid grid-cols-5 gap-2">
-                        {[55, 80, 42, 67, 92].map((height) => (
-                          <div key={height} className="flex h-20 items-end border-2 border-black bg-[#FDFBF7] p-1">
-                            <div className="w-full bg-[#00E676] border-2 border-black" style={{ height: `${height}%` }} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {workflowCards.map(({ icon: Icon, title, copy, badge }) => (
-                    <article key={title} className="rounded-2xl border-4 border-black bg-[#FDFBF7] p-4 shadow-[6px_6px_0_#0F172A]">
-                      <div className="flex items-center justify-between">
-                        <span className="grid h-11 w-11 place-items-center rounded-xl border-[3px] border-black bg-[#FFD600] shadow-[3px_3px_0_#0F172A]">
-                          <Icon size={20} strokeWidth={3} />
-                        </span>
-                        <span className="border-2 border-black bg-white px-2 py-1 text-[10px] font-black uppercase">{badge}</span>
-                      </div>
-                      <h3 className="mt-5 text-lg font-black uppercase italic">{title}</h3>
-                      <p className="mt-2 text-sm font-bold leading-6 text-black/65">{copy}</p>
-                    </article>
-                  ))}
-                </section>
+                  {activeView === 'overview' && (
+                    <VaultStats vaultRecords={vaultRecords} isLoading={isLoadingVaults} />
+                  )}
                 {activeView === 'create' && (
                   <VaultUpload />
                 )}

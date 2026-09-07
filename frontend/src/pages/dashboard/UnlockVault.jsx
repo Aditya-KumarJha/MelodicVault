@@ -6,6 +6,7 @@ import {
 
 import {
   AlertTriangle,
+  CheckCircle2,
   CircleStop,
   Download,
   FileArchive,
@@ -824,373 +825,178 @@ const UnlockVault = () => {
    */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* Header */}
-
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <KeyRound
-              size={21}
-            />
-          </div>
-
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Unlock Vault
-            </h1>
-
-            <p className="text-sm text-slate-500">
-              Reproduce the original melody to decrypt your file.
-            </p>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Security notice */}
-
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <div className="flex gap-3">
-
-          <AlertTriangle
-            size={20}
-            className="mt-0.5 shrink-0 text-amber-600"
-          />
-
-          <div>
-            <p className="font-medium text-amber-900">
-              Your saved melody is not used here
-            </p>
-
-            <p className="mt-1 text-sm text-amber-800">
-              Unlock with a fresh melody or your
-              12-word recovery phrase. Both methods
-              run locally; the backend never receives
-              either secret.
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-
-      {/* Step 1 */}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
+      {/* Step 1: Select Vault */}
+      <section className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
         <div className="mb-5 flex items-center gap-3">
-
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-            01
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-black bg-[#FFD600] text-sm font-black uppercase italic shadow-[3px_3px_0_#0F172A]">
+            1
           </span>
-
           <div>
-            <h2 className="font-semibold text-slate-900">
-              Select Vault
-            </h2>
-
-            <p className="text-sm text-slate-500">
-              Choose the encrypted .vault file.
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1E6BFF]">Unlock Flow</p>
+            <h2 className="mt-1 text-lg font-black uppercase italic text-black">Select .vault File</h2>
           </div>
-
         </div>
 
-
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 px-6 py-10 text-center transition hover:border-slate-500">
-
-          <FileArchive
-            size={30}
-            className="mb-3 text-slate-500"
-          />
-
-          <span className="font-medium text-slate-800">
-            Choose .vault file
-          </span>
-
-          <span className="mt-1 text-sm text-slate-500">
-            The file is processed locally.
-          </span>
-
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-4 border-dashed border-black bg-[#FDFBF7] px-6 py-10 text-center transition hover:bg-[#FFD600]/20">
+          <FileArchive size={32} className="mb-3 text-black" strokeWidth={2.5} />
+          <span className="font-black uppercase italic text-black">Choose .vault File</span>
+          <span className="mt-2 text-xs font-bold uppercase text-black/60">The file is processed locally.</span>
           <input
             type="file"
             accept=".vault,application/json"
             onChange={handleVaultFile}
             className="hidden"
           />
-
         </label>
 
-
         {vault && (
-          <div className="mt-4 rounded-xl bg-slate-50 p-4">
-
-            <p className="font-medium text-slate-900">
-              {vault.file.name}
-            </p>
-
-            <p className="mt-1 text-sm text-slate-500">
-              {formatBytes(vault.file.size)}
-            </p>
-
+          <div className="mt-4 rounded-xl border-[3px] border-black bg-[#00E676] p-4">
+            <p className="font-black uppercase italic text-black">{vault.file.name}</p>
+            <p className="mt-1 text-xs font-bold uppercase text-black/65">{formatBytes(vault.file.size)}</p>
           </div>
         )}
-
       </section>
 
-
-      {/* Step 2 */}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
+      {/* Step 2: Reproduce Melody */}
+      <section className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
         <div className="mb-5 flex items-center gap-3">
-
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-            02
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-black bg-[#00E676] text-sm font-black uppercase italic shadow-[3px_3px_0_#0F172A]">
+            2
           </span>
-
           <div>
-            <h2 className="font-semibold text-slate-900">
-              Reproduce Melody
-            </h2>
-
-            <p className="text-sm text-slate-500">
-              Play it live or provide the original MIDI recording.
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1E6BFF]">Melody Input</p>
+            <h2 className="mt-1 text-lg font-black uppercase italic text-black">Reproduce Melody</h2>
           </div>
-
         </div>
 
-
-        <div className="grid gap-4 md:grid-cols-2">
-
+        <div className="grid gap-5 md:grid-cols-2">
           {/* Live MIDI */}
-
-          <div className="rounded-xl border border-slate-200 p-5">
-
-            <div className="mb-4 flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                <Play
-                  size={19}
-                />
-              </div>
-
+          <div className="rounded-2xl border-4 border-black bg-[#FFC0CB] p-5 shadow-[6px_6px_0_#0F172A]">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-lg border-[3px] border-black bg-[#FFD600]">
+                <Play size={18} strokeWidth={3} />
+              </span>
               <div>
-                <h3 className="font-medium text-slate-900">
-                  Play Melody
-                </h3>
-
-                <p className="text-xs text-slate-500">
-                  Use your MIDI keyboard.
-                </p>
+                <h3 className="text-xs font-black uppercase italic text-black">Live MIDI</h3>
+                <p className="text-[10px] font-bold uppercase text-black/60">Use your keyboard</p>
               </div>
-
             </div>
-
 
             <button
               type="button"
-              onClick={
-                requestMidiAccess
-              }
-              className="mb-4 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              onClick={requestMidiAccess}
+              className="mb-3 w-full rounded-lg border-[3px] border-black bg-white px-3 py-2 text-xs font-black uppercase italic shadow-[3px_3px_0_#0F172A] hover:bg-[#FFD600]"
             >
-              Detect MIDI Devices
+              Detect MIDI
             </button>
-
 
             {inputs.length > 0 && (
               <select
                 value={selectedInputId}
-                onChange={(event) =>
-                  setSelectedInputId(
-                    event.target.value
-                  )
-                }
-                className="mb-4 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                onChange={(event) => setSelectedInputId(event.target.value)}
+                className="mb-3 w-full rounded-lg border-[3px] border-black bg-white px-2 py-2 text-xs font-bold uppercase text-black"
               >
-
-                {inputs.map(
-                  (input) => (
-                    <option
-                      key={input.id}
-                      value={input.id}
-                    >
-                      {input.name ||
-                        'MIDI Input'}
-                    </option>
-                  )
-                )}
-
+                {inputs.map((input) => (
+                  <option key={input.id} value={input.id}>
+                    {input.name || 'MIDI Input'}
+                  </option>
+                ))}
               </select>
             )}
 
-
             {recording ? (
-
               <button
                 type="button"
-                onClick={
-                  stopRecording
-                }
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700"
+                onClick={stopRecording}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-[3px] border-black bg-red-500 px-3 py-2 text-xs font-black uppercase italic text-white shadow-[3px_3px_0_#0F172A]"
               >
-                <CircleStop
-                  size={18}
-                />
-                Stop Recording
+                <CircleStop size={16} strokeWidth={3} />
+                Stop
               </button>
-
             ) : (
-
               <button
                 type="button"
-                onClick={
-                  startRecording
-                }
-                disabled={
-                  !midiAccess ||
-                  !selectedInputId ||
-                  !vault
-                }
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={startRecording}
+                disabled={!midiAccess || !selectedInputId || !vault}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-[3px] border-black bg-[#1E6BFF] px-3 py-2 text-xs font-black uppercase italic text-white shadow-[3px_3px_0_#0F172A] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Play
-                  size={18}
-                />
-                Start Recording
+                <Play size={16} strokeWidth={3} />
+                Play
               </button>
-
             )}
-
           </div>
 
-
-          {/* MIDI file */}
-
-          <div className="rounded-xl border border-slate-200 p-5">
-
-            <div className="mb-4 flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                <FileMusic
-                  size={19}
-                />
-              </div>
-
+          {/* MIDI File Upload */}
+          <div className="rounded-2xl border-4 border-black bg-[#FFC0CB] p-5 shadow-[6px_6px_0_#0F172A]">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="grid h-9 w-9 place-items-center rounded-lg border-[3px] border-black bg-[#FFD600]">
+                <FileMusic size={18} strokeWidth={3} />
+              </span>
               <div>
-                <h3 className="font-medium text-slate-900">
-                  Upload MIDI
-                </h3>
-
-                <p className="text-xs text-slate-500">
-                  Use the original .mid file.
-                </p>
+                <h3 className="text-xs font-black uppercase italic text-black">Upload MIDI</h3>
+                <p className="text-[10px] font-bold uppercase text-black/60">Original .mid file</p>
               </div>
-
             </div>
 
-
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
-
-              <Upload
-                size={17}
-              />
-
-              Choose .mid file
-
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-[3px] border-black bg-white px-3 py-2 text-xs font-black uppercase italic shadow-[3px_3px_0_#0F172A] hover:bg-[#FFD600]">
+              <Upload size={16} strokeWidth={3} />
+              Choose .mid
               <input
                 type="file"
                 accept=".mid,.midi,audio/midi"
-                onChange={
-                  handleMidiFile
-                }
+                onChange={handleMidiFile}
                 className="hidden"
               />
-
             </label>
 
-
             {midiFile && (
-              <div className="mt-4 rounded-lg bg-slate-50 p-3">
-
-                <p className="truncate text-sm font-medium text-slate-800">
-                  {midiFile.name}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  {notes.length} notes detected
-                </p>
-
+              <div className="mt-3 rounded-lg border-[3px] border-black bg-white p-3">
+                <p className="truncate text-xs font-black uppercase italic text-black">{midiFile.name}</p>
+                <p className="text-[10px] font-bold uppercase text-black/60">{notes.length} notes detected</p>
               </div>
             )}
-
           </div>
-
         </div>
 
-
         {/* Captured notes */}
-
         {notes.length > 0 && (
-          <div className="mt-5 rounded-xl border border-slate-200 p-4">
-
+          <div className="mt-5 rounded-xl border-[3px] border-black bg-[#FDFBF7] p-4">
             <div className="mb-3 flex items-center justify-between">
-
-              <span className="text-sm font-medium text-slate-800">
-                Melody
-              </span>
-
-              <span className="text-xs text-slate-500">
-                {notes.length}/{MAX_NOTES} notes
-              </span>
-
+              <span className="text-xs font-black uppercase italic text-black">Melody Pattern</span>
+              <span className="text-[10px] font-black uppercase text-black/60">{notes.length}/{MAX_NOTES}</span>
             </div>
-
-
             <div className="flex flex-wrap gap-2">
-
-              {notes.map(
-                (note, index) => (
-                  <span
-                    key={`${note.note}-${index}`}
-                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
-                  >
-                    {getNoteName(
-                      note.note
-                    )}
-                  </span>
-                )
-              )}
-
+              {notes.map((note, index) => (
+                <span
+                  key={`${note.note}-${index}`}
+                  className="rounded-lg border-[3px] border-black bg-[#00E676] px-3 py-1.5 text-xs font-black uppercase italic text-black shadow-[2px_2px_0_#0F172A]"
+                >
+                  {getNoteName(note.note)}
+                </span>
+              ))}
             </div>
-
           </div>
         )}
-
       </section>
 
-
-      {/* Recovery phrase alternative */}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-sm font-semibold text-slate-900">
+      {/* Step 3: Recovery Phrase Alternative */}
+      <section className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-black bg-[#FFD600] text-sm font-black uppercase italic shadow-[3px_3px_0_#0F172A]">
             +
           </span>
           <div>
-            <h2 className="font-semibold text-slate-900">Use recovery phrase</h2>
-            <p className="text-sm text-slate-500">Optional alternative when you cannot reproduce the melody.</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1E6BFF]">Alternative</p>
+            <h2 className="mt-1 text-lg font-black uppercase italic text-black">Recovery Phrase</h2>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {recoveryWords.map((word, index) => (
             <label key={`recovery-word-${index}`} className="relative">
-              <span className="absolute left-3 top-2 text-[10px] font-black text-slate-400">{index + 1}</span>
+              <span className="absolute left-2.5 top-2 text-[10px] font-black text-black/40">{index + 1}</span>
               <input
                 type="text"
                 value={word}
@@ -1199,97 +1005,68 @@ const UnlockVault = () => {
                 autoComplete="off"
                 spellCheck="false"
                 aria-label={`Recovery word ${index + 1}`}
-                className="h-16 w-full rounded-xl border-2 border-slate-300 px-3 pb-2 pt-6 text-sm font-semibold text-slate-800 outline-none focus:border-slate-900"
+                className="h-14 w-full rounded-lg border-[3px] border-black bg-white px-2.5 pb-1 pt-5 text-xs font-bold uppercase text-black outline-none focus:bg-[#FFD600]"
               />
             </label>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-500">Enter all 12 words in the original order. Pasting the full phrase fills the boxes automatically.</p>
+        <p className="mt-3 text-xs font-bold uppercase text-black/60">Enter all 12 words in order. Paste the phrase to auto-fill.</p>
       </section>
 
-
-      {/* Step 3 */}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-
+      {/* Step 4: Unlock */}
+      <section className="rounded-2xl border-4 border-black bg-white p-5 shadow-[7px_7px_0_#0F172A] sm:p-7">
         <div className="mb-5 flex items-center gap-3">
-
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-            03
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl border-[3px] border-black bg-[#00E676] text-sm font-black uppercase italic shadow-[3px_3px_0_#0F172A]">
+            3
           </span>
-
           <div>
-            <h2 className="font-semibold text-slate-900">
-              Unlock
-            </h2>
-
-            <p className="text-sm text-slate-500">
-              The melody is used to recover the encryption key.
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1E6BFF]">Final Step</p>
+            <h2 className="mt-1 text-lg font-black uppercase italic text-black">Decrypt & Download</h2>
           </div>
-
         </div>
-
 
         <button
           type="button"
-          onClick={
-            unlockVault
-          }
-          disabled={
-            !vault ||
-            (!signature && !recoveryPhrase) ||
-            unlocking
-          }
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={unlockVault}
+          disabled={!vault || (!signature && !recoveryPhrase) || unlocking}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-[3px] border-black bg-[#00E676] px-5 py-3 text-xs font-black uppercase italic text-black shadow-[5px_5px_0_#0F172A] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
         >
-
           {unlocking ? (
             <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
               Unlocking...
             </>
           ) : (
             <>
-              <Unlock
-                size={19}
-              />
-              Unlock & Download
+              <Unlock size={18} strokeWidth={3} />
+              Unlock Vault
             </>
           )}
-
         </button>
 
-
         {unlocked && (
-          <div className="mt-4 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
-
-            <Download
-              size={20}
-              className="text-green-600"
-            />
-
-            <p className="text-sm font-medium text-green-800">
-              File successfully decrypted and downloaded.
-            </p>
-
+          <div className="mt-4 rounded-xl border-[3px] border-black bg-[#00E676] p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 size={20} strokeWidth={3} className="text-black" />
+              <p className="font-black uppercase italic text-black">File unlocked and downloaded!</p>
+            </div>
           </div>
         )}
-
       </section>
 
-
       {/* Messages */}
-
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="rounded-xl border-[3px] border-black bg-[#FFD600] p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-black" strokeWidth={3} />
+            <p className="text-xs font-black uppercase italic text-black">{error}</p>
+          </div>
         </div>
       )}
 
       {status && !error && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          {status}
+        <div className="rounded-xl border-[3px] border-black bg-[#FFC0CB] p-4">
+          <p className="text-xs font-black uppercase italic text-black">{status}</p>
         </div>
       )}
 
