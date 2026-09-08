@@ -16,7 +16,7 @@ const NOTE_NAMES = [
 
 export const MAX_NOTES = 20;
 export const QUANTIZATION_MS = 250;
-
+export const STORAGE_KEY = 'melodic-vault-keys';
 export const getNoteName = (midiNote) => {
   const octave = Math.floor(midiNote / 12) - 1;
   return `${NOTE_NAMES[midiNote % 12]}${octave}`;
